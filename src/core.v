@@ -30,10 +30,11 @@ reg [15:0]  ss          = 16'h0000;
 reg [15:0]  ds          = 16'h0000;
 // ---------------------------------------------------------------------
 reg         bus         = 1'b0;
-reg [15:0]  seg         = 16'h0000;          // Текущий выбранный сегмент
-reg [15:0]  ea          = 16'h0000;          // Эффективный адрес
-reg [ 5:0]  phi         = 1'b0;              // Фаза выполнения
-reg [ 5:0]  phi_next    = 1'b0;              // Фаза выполнения
+reg [15:0]  seg         = 16'h0000;         // Текущий выбранный сегмент
+reg [15:0]  ea          = 16'h0000;         // Эффективный адрес
+reg [ 5:0]  phi         = 1'b0;             // Фаза выполнения
+reg [ 5:0]  phi_next    = 1'b0;             // Фаза выполнения
+reg [ 3:0]  fn          = 1'b0;             // Субфаза phi
 reg [ 2:0]  alu         = 3'h0;
 reg [15:0]  op1         = 16'h0000;
 reg [15:0]  op2         = 16'h0000;
@@ -132,7 +133,7 @@ else if (locked) case (phi)
 
         // Инициализация регистров управления
         we          <= 1'b0;
-        ip          <= ip + 1'b1;
+        fn          <= 1'b0;
         src1        <= SRC_I20; // Источник op1 modrm
         src2        <= SRC_I53; // Источник op2 modrm
         size        <= in[0];
@@ -140,6 +141,7 @@ else if (locked) case (phi)
         regn        <= in[2:0];
         alu         <= in[5:3];
         phi_next    <= PREPARE;
+        ip          <= ip + 1'b1;
 
         case (in)
 
@@ -270,14 +272,14 @@ else if (locked) case (phi)
         if (dir || modrm[7:6] == 2'b11) begin
 
             case (dir ? modrm[5:3] : modrm[2:0])
-            3'b000: if (size) ax[15:0] <= wb[15:0]; else ax[ 7:0] <= wb[7:0];
-            3'b001: if (size) cx[15:0] <= wb[15:0]; else cx[ 7:0] <= wb[7:0];
-            3'b010: if (size) dx[15:0] <= wb[15:0]; else dx[ 7:0] <= wb[7:0];
-            3'b011: if (size) bx[15:0] <= wb[15:0]; else bx[ 7:0] <= wb[7:0];
-            3'b100: if (size) sp[15:0] <= wb[15:0]; else ax[15:8] <= wb[7:0];
-            3'b101: if (size) bp[15:0] <= wb[15:0]; else cx[15:8] <= wb[7:0];
-            3'b110: if (size) si[15:0] <= wb[15:0]; else dx[15:8] <= wb[7:0];
-            3'b111: if (size) di[15:0] <= wb[15:0]; else bx[15:8] <= wb[7:0];
+            3'b000: if (size) ax[15:0] <= wb; else ax[ 7:0] <= wb[7:0];
+            3'b001: if (size) cx[15:0] <= wb; else cx[ 7:0] <= wb[7:0];
+            3'b010: if (size) dx[15:0] <= wb; else dx[ 7:0] <= wb[7:0];
+            3'b011: if (size) bx[15:0] <= wb; else bx[ 7:0] <= wb[7:0];
+            3'b100: if (size) sp[15:0] <= wb; else ax[15:8] <= wb[7:0];
+            3'b101: if (size) bp[15:0] <= wb; else cx[15:8] <= wb[7:0];
+            3'b110: if (size) si[15:0] <= wb; else dx[15:8] <= wb[7:0];
+            3'b111: if (size) di[15:0] <= wb; else bx[15:8] <= wb[7:0];
             endcase
 
             phi <= phi_next;
@@ -320,10 +322,10 @@ else if (locked) case (phi)
         // АЛУ в 00-3F
         8'b00xx_x0xx: begin
 
-            wb    <= ar;
-            flags <= af;
             phi   <= (alu == ALU_CMP ? PREPARE : MODRM_WB);
             bus   <= (alu == ALU_CMP ? 1'b0 : bus);
+            wb    <= ar;
+            flags <= af;
 
         end
 
