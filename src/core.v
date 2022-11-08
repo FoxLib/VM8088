@@ -16,8 +16,8 @@ initial begin we = 1'b0; out = 8'h00; end
 assign  address = bus ? {seg, 4'h0} + ea : {cs, 4'h0} + ip;
 // ---------------------------------------------------------------------
 reg [15:0]  ax          = 16'h12AA;
-reg [15:0]  cx          = 16'h0013;
-reg [15:0]  dx          = 16'h0014;
+reg [15:0]  cx          = 16'h0313;
+reg [15:0]  dx          = 16'h5014;
 reg [15:0]  bx          = 16'h0105;
 reg [15:0]  sp          = 16'h0167;
 reg [15:0]  bp          = 16'h1008;
@@ -45,7 +45,7 @@ reg         size        = 1'b0;
 reg         dir         = 1'b0;
 // ---------------------------------------------------------------------
 reg [15:0]  ip          = 16'h0000;
-reg [11:0]  flags       = 12'b0000_0000_0010;
+reg [11:0]  flags       = 12'b0000_0100_0010;
 //                            ODIT SZ A  P C
 // ---------------------------------------------------------------------
 reg         o_seg       = 1'b0;
@@ -83,6 +83,11 @@ localparam
     ALU_ADC = 3'h2, ALU_SBB = 3'h3,
     ALU_AND = 3'h4, ALU_SUB = 3'h5,
     ALU_XOR = 3'h6, ALU_CMP = 3'h7;
+
+localparam
+
+    CF = 0, PF = 2, AF =  4, ZF =  6, SF = 7,
+    TF = 8, IF = 9, DF = 10, OF = 11;
 
 // Выбор источника регистров
 // ---------------------------------------------------------------------
@@ -158,17 +163,31 @@ else if (locked) case (phi)
         // Опкоды, первый такт
         default: begin
 
+            phi     <= EXEC;
+            opcode  <= in;
+
             // Защелкивание префиксов и опкода на будущее
-            opcode <= in;
-            o_seg  <= o_seg_; o_seg_ <= 1'h0;
-            o_rep  <= o_rep_; o_rep_ <= 2'h0;
+            o_seg <= o_seg_; o_seg_ <= 1'h0;
+            o_rep <= o_rep_; o_rep_ <= 2'h0;
 
             if (!o_seg_) seg <= ds;
 
             casex (in)
 
-            // Базовый АЛУ
-            8'b00xx_x0xx: begin phi <= MODRM; end
+                // <ALU> modrm
+                8'b00xx_x0xx: begin phi <= MODRM; end
+
+                // MOV r, i
+                8'b1011_xxxx: begin size <= in[3]; end
+
+                // Jccc short
+                8'b0111_xxxx: // Пропуск, если условие не сработало
+                if (branch[ in[3:1] ] == in[0]) begin
+
+                    phi <= PREPARE;
+                    ip  <= ip + 2;
+
+                end
 
             endcase
 
@@ -176,6 +195,52 @@ else if (locked) case (phi)
         endcase
 
     end
+
+    // ~=~=~= Исполнение инструкции ~=~=~=
+    EXEC: casex (opcode)
+
+        // #00-3F АЛУ
+        8'b00xx_x0xx: begin
+
+            phi   <= (alu == ALU_CMP ? PREPARE : MODRM_WB);
+            bus   <= (alu == ALU_CMP ? 1'b0 : bus);
+            wb    <= ar;
+            flags <= af;
+
+        end
+
+        // #B0-BF MOV r, imm
+        8'b1011_xxxx: case (fn)
+
+            // Младший байт
+            0: begin
+
+                phi <= size ? EXEC : MODRM_WB;
+                fn  <= 1;
+                dir <= 1'b1;
+                wb  <= in;
+                ip  <= ip + 1'b1;
+
+                modrm[5:3] <= opcode[2:0];
+
+            end
+
+            // Старший байт
+            1: begin
+
+                phi <= MODRM_WB;
+                ip  <= ip + 1'b1;
+                wb[15:8] <= in;
+
+            end
+
+        endcase
+
+        // Короткий переход
+        8'b1110_1011,
+        8'b0111_xxxx: begin phi <= PREPARE; ip <= ip + {{8{in[7]}}, in} + 1'b1; end
+
+    endcase
 
     // ~=~=~= Раскодирование байта ModRM ~=~=~=
     MODRM: begin
@@ -203,7 +268,8 @@ else if (locked) case (phi)
         case (in[7:6])
         2'b00: begin
 
-          if (in[2:0] == 3'b110) phi <= MODRM_DISP16;
+          if (in[2:0] == 3'b110)
+               begin phi <= MODRM_DISP16; end
           else begin phi <= MODRM_READOP; bus <= 1'b1; end
 
         end
@@ -250,8 +316,10 @@ else if (locked) case (phi)
     // Чтение операнда: LOW
     MODRM_READOP: begin
 
+        phi <= size ? MODRM_READOPH : EXEC;
+
         if (dir) op2 <= in; else op1 <= in;
-        if (size) begin ea <= ea + 1'b1; phi <= MODRM_READOPH; end else phi <= EXEC;
+        if (size) ea <= ea + 1'b1;
 
     end
 
@@ -316,21 +384,6 @@ else if (locked) case (phi)
 
     end
 
-    // ~=~=~= Исполнение инструкции ~=~=~=
-    EXEC: casex (opcode)
-
-        // АЛУ в 00-3F
-        8'b00xx_x0xx: begin
-
-            phi   <= (alu == ALU_CMP ? PREPARE : MODRM_WB);
-            bus   <= (alu == ALU_CMP ? 1'b0 : bus);
-            wb    <= ar;
-            flags <= af;
-
-        end
-
-    endcase
-
 endcase
 
 // ~=~=~= ЦЕНТРАЛЬНОЕ АРИФМЕТИКО-ЛОГИЧЕСКОЕ УСТРОЙСТВО =~=~=~
@@ -343,7 +396,7 @@ wire       i_arith  = !(alu == ALU_OR  || alu == ALU_XOR || alu == ALU_AND);
 wire r_over     = (op1[ntop] ^ op2[ntop] ^ i_add) & (op1[ntop] ^ ar[ntop]);
 wire r_sign     = ar[ntop];
 wire r_zero     = (size ? ar[15:0] : ar[7:0]) == 1'b0;
-wire r_aux      = op1[4] ^ op2[4] ^ ar[4];
+wire r_aux      = op1[AF] ^ op2[AF] ^ ar[AF];
 wire r_parity   = ~^ar[7:0];
 wire r_carry    = ar[ntop + 1];
 
@@ -351,8 +404,8 @@ wire r_carry    = ar[ntop + 1];
 wire [16:0] ar =
     alu == ALU_ADD ? op1 + op2 :
     alu == ALU_OR  ? op1 | op2 :
-    alu == ALU_ADC ? op1 + op2 + flags[0] :
-    alu == ALU_SBB ? op1 - op2 - flags[0] :
+    alu == ALU_ADC ? op1 + op2 + flags[CF] :
+    alu == ALU_SBB ? op1 - op2 - flags[CF] :
     alu == ALU_AND ? op1 & op2 :
     alu == ALU_XOR ? op1 ^ op2 :
                      op1 - op2; // SUB, CMP
@@ -362,5 +415,19 @@ wire [11:0] af = {
     r_over & i_arith, flags[10:9], r_sign,   r_zero, 1'b0,     // OSZ
     r_aux  & i_arith, 1'b0,        r_parity, 1'b1,   r_carry}; // APC
 
+// ~=~=~= ВЫЧИСЛЕНИЯ =~=~=~
+
+// Условные переходы
+wire [7:0] branch = {
+
+    /*7*/ (flags[SF] ^ flags[OF]) | flags[ZF],
+    /*6*/ (flags[SF] ^ flags[OF]),
+    /*5*/  flags[PF],
+    /*4*/  flags[SF],
+    /*3*/  flags[CF] | flags[ZF],
+    /*2*/  flags[ZF],
+    /*1*/  flags[CF],
+    /*0*/  flags[OF]
+};
 
 endmodule

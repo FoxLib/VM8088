@@ -1,6 +1,8 @@
 #all: icarus app
 all: icarus
 icarus:
+	fasm tb.asm tb.bin
+	php utils/bin2hex.php tb.bin tb.hex
 	iverilog -g2005-sv -DICARUS=1 -o tb.qqq tb.v core.v
 	vvp tb.qqq >> /dev/null
 	rm tb.qqq
