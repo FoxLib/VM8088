@@ -169,16 +169,15 @@ else if (locked) case (phi)
             // Защелкивание префиксов и опкода на будущее
             o_seg <= o_seg_; o_seg_ <= 1'h0;
             o_rep <= o_rep_; o_rep_ <= 2'h0;
-
             if (!o_seg_) seg <= ds;
 
             casex (in)
 
                 // <ALU> modrm
-                8'b00xx_x0xx: begin phi <= MODRM; end
+                8'b00xx_x0xx: phi <= MODRM;
 
                 // MOV r, i
-                8'b1011_xxxx: begin size <= in[3]; end
+                8'b1011_xxxx: size <= in[3];
 
                 // Jccc short
                 8'b0111_xxxx: // Пропуск, если условие не сработало
@@ -199,7 +198,7 @@ else if (locked) case (phi)
     // ~=~=~= Исполнение инструкции ~=~=~=
     EXEC: casex (opcode)
 
-        // #00-3F АЛУ
+        // #00-3F АЛУ modrm
         8'b00xx_x0xx: begin
 
             phi   <= (alu == ALU_CMP ? PREPARE : MODRM_WB);
@@ -208,6 +207,24 @@ else if (locked) case (phi)
             flags <= af;
 
         end
+
+        // #00-3F АЛУ аккумулятор
+        8'b00xx_x10x: case (fn)
+
+            0: begin ip <= ip + 1; fn <= size ? 1 : 2; op1 <= ax; op2 <= in; end
+            1: begin ip <= ip + 1; fn <= 2; op2[15:8] <= in; end
+            2: begin
+
+                phi     <= (alu == ALU_CMP ? PREPARE : MODRM_WB);
+                dir     <= 1'b1;
+                wb      <= ar;
+                flags   <= af;
+
+                modrm[5:3] <= 3'b0;
+
+            end
+
+        endcase
 
         // #B0-BF MOV r, imm
         8'b1011_xxxx: case (fn)
