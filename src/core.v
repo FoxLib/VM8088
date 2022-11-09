@@ -45,7 +45,7 @@ reg         size        = 1'b0;
 reg         dir         = 1'b0;
 // ---------------------------------------------------------------------
 reg [15:0]  ip          = 16'h0000;
-reg [11:0]  flags       = 12'b0000_0100_0010;
+reg [11:0]  flags       = 12'b0000_0000_0010;
 //                            ODIT SZ A  P C
 // ---------------------------------------------------------------------
 reg         o_seg       = 1'b0;
@@ -179,6 +179,15 @@ else if (locked) case (phi)
                 // MOV r, i
                 8'b1011_xxxx: size <= in[3];
 
+                // INC|DEC r16
+                8'b0100_xxxx: begin
+
+                    size <= 1'b1;
+                    src1 <= SRC_REG;
+                    alu  <= in[3] ? ALU_SUB : ALU_ADD;
+
+                end
+
                 // Jccc short
                 8'b0111_xxxx: // Пропуск, если условие не сработало
                 if (branch[ in[3:1] ] == in[0]) begin
@@ -211,8 +220,26 @@ else if (locked) case (phi)
         // #00-3F АЛУ аккумулятор
         8'b00xx_x10x: case (fn)
 
-            0: begin ip <= ip + 1; fn <= size ? 1 : 2; op1 <= ax; op2 <= in; end
-            1: begin ip <= ip + 1; fn <= 2; op2[15:8] <= in; end
+            // 8 BIT
+            0: begin
+
+                ip  <= ip + 1;
+                fn  <= size ? 1 : 2;
+                op1 <= ax;
+                op2 <= in;
+
+            end
+
+            // 16 BIT
+            1: begin
+
+                ip <= ip + 1;
+                fn <= 2;
+                op2[15:8] <= in;
+
+            end
+
+            // Запись результата
             2: begin
 
                 phi     <= (alu == ALU_CMP ? PREPARE : MODRM_WB);
@@ -221,6 +248,32 @@ else if (locked) case (phi)
                 flags   <= af;
 
                 modrm[5:3] <= 3'b0;
+
+            end
+
+        endcase
+
+        // #40-4F INC/DEC
+        8'b0100_xxxx: case (fn)
+
+            // Установка операндов
+            0: begin
+
+                fn  <= 1;
+                op1 <= r1;
+                op2 <= 1'b1;
+
+            end
+
+            // Запись результата
+            1: begin
+
+                phi     <= MODRM_WB;
+                dir     <= 1'b1;
+                wb      <= ar;
+                flags   <= {af[11:1], flags[CF]};
+
+                modrm[5:3] <= regn;
 
             end
 
@@ -262,12 +315,12 @@ else if (locked) case (phi)
     // ~=~=~= Раскодирование байта ModRM ~=~=~=
     MODRM: begin
 
-        ip      <= ip + 1;
-        modrm   <= in;
+        ip    <= ip + 1;
+        modrm <= in;
 
         // Выбор операндов
-        op1     <= dir ? r2 : r1;
-        op2     <= dir ? r1 : r2;
+        op1   <= dir ? r2 : r1;
+        op2   <= dir ? r1 : r2;
 
         // Эффективный адрес
         case (in[2:0])

@@ -13,4 +13,4 @@ app:
 	strip tb
 	./tb
 clean:
-	rm tb tb.vcd
+	rm tb tb.vcd tb.hex tb.bin

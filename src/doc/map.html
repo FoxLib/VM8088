@@ -10,11 +10,11 @@
         th      { background: #000; color: #fff; }
         tr.h th { width: 92px; }
         td b    { display: block; }
-        td      { background: #eee; }
+        td      { background: #ccc; color: #aaa; }
         td.mrm  { background: #538430; color: #fff; }
         td.pfx  { background: #6898a6; color: #fff; }
         td.inv  { background: #636363; color: #fff; }
-        td.ok   { background: #d5e8c6; }
+        td.ok   { background: #d5e8c6; color: #000; }
         h2      { margin: 0; padding: 8px 0;font-size: 22px; font-family: Arial; }
     </style>
 </head>
@@ -35,16 +35,16 @@
         <!--01--><td class="mrm"><b>ADD</b>rm,r16</td>
         <!--02--><td class="mrm"><b>ADD</b>r8,rm</td>
         <!--03--><td class="mrm"><b>ADD</b>r16,rm</td>
-        <!--04--><td class=""><b>ADD</b>a,ib</td>
-        <!--05--><td class=""><b>ADD</b>a,iw</td>
+        <!--04--><td class="ok"><b>ADD</b>a,ib</td>
+        <!--05--><td class="ok"><b>ADD</b>a,iw</td>
         <!--06--><td class=""><b>PUSH</b>es</td>
         <!--07--><td class=""><b>POP</b>es</td>
         <!--08--><td class="mrm"><b>OR</b>rm,r8</td>
         <!--09--><td class="mrm"><b>OR</b>rm,r16</td>
         <!--0A--><td class="mrm"><b>OR</b>r8,rm</td>
         <!--0B--><td class="mrm"><b>OR</b>r16,rm</td>
-        <!--0C--><td class=""><b>OR</b>a,ib</td>
-        <!--0D--><td class=""><b>OR</b>a,iw</td>
+        <!--0C--><td class="ok"><b>OR</b>a,ib</td>
+        <!--0D--><td class="ok"><b>OR</b>a,iw</td>
         <!--0E--><td class=""><b>PUSH</b>cs</td>
         <!--0F--><td class=""><b>#</b></td>
     </tr>
@@ -54,16 +54,16 @@
         <!--11--><td class="mrm"><b>ADC</b>rm,r16</td>
         <!--12--><td class="mrm"><b>ADC</b>r8,rm</td>
         <!--13--><td class="mrm"><b>ADC</b>r16,rm</td>
-        <!--14--><td class=""><b>ADC</b>a,ib</td>
-        <!--15--><td class=""><b>ADC</b>a,iw</td>
+        <!--14--><td class="ok"><b>ADC</b>a,ib</td>
+        <!--15--><td class="ok"><b>ADC</b>a,iw</td>
         <!--16--><td class=""><b>PUSH</b>ss</td>
         <!--17--><td class=""><b>POP</b>ss</td>
         <!--18--><td class="mrm"><b>SBB</b>rm,r8</td>
         <!--19--><td class="mrm"><b>SBB</b>rm,r16</td>
         <!--1A--><td class="mrm"><b>SBB</b>r8,rm</td>
         <!--1B--><td class="mrm"><b>SBB</b>r16,rm</td>
-        <!--1C--><td class=""><b>SBB</b>a,ib</td>
-        <!--1D--><td class=""><b>SBB</b>a,iw</td>
+        <!--1C--><td class="ok"><b>SBB</b>a,ib</td>
+        <!--1D--><td class="ok"><b>SBB</b>a,iw</td>
         <!--1E--><td class=""><b>PUSH</b>ds</td>
         <!--1F--><td class=""><b>POP</b>ds</td>
     </tr>
@@ -73,17 +73,17 @@
         <!--21--><td class="mrm"><b>AND</b>rm,r16</td>
         <!--22--><td class="mrm"><b>AND</b>r8,rm</td>
         <!--23--><td class="mrm"><b>AND</b>r16,rm</td>
-        <!--24--><td class=""><b>AND</b>a,ib</td>
-        <!--25--><td class=""><b>AND</b>a,iw</td>
-        <!--26--><td class=""><b>ES:</b></td>
+        <!--24--><td class="ok"><b>AND</b>a,ib</td>
+        <!--25--><td class="ok"><b>AND</b>a,iw</td>
+        <!--26--><td class="pfx"><b>ES:</b></td>
         <!--27--><td class=""><b>DAA</b></td>
         <!--28--><td class="mrm"><b>SUB</b>rm,r8</td>
         <!--29--><td class="mrm"><b>SUB</b>rm,r16</td>
         <!--2A--><td class="mrm"><b>SUB</b>r8,rm</td>
         <!--2B--><td class="mrm"><b>SUB</b>r16,rm</td>
-        <!--2C--><td class=""><b>SUB</b>a,ib</td>
-        <!--2D--><td class=""><b>SUB</b>a,iw</td>
-        <!--2E--><td class=""><b>CS:</b></td>
+        <!--2C--><td class="ok"><b>SUB</b>a,ib</td>
+        <!--2D--><td class="ok"><b>SUB</b>a,iw</td>
+        <!--2E--><td class="pfx"><b>CS:</b></td>
         <!--2F--><td class=""><b>DAS</b></td>
     </tr>
     <tr>
@@ -92,37 +92,37 @@
         <!--31--><td class="mrm"><b>XOR</b>rm,r16</td>
         <!--32--><td class="mrm"><b>XOR</b>r8,rm</td>
         <!--33--><td class="mrm"><b>XOR</b>r16,rm</td>
-        <!--34--><td class=""><b>XOR</b>a,ib</td>
-        <!--35--><td class=""><b>XOR</b>a,iw</td>
-        <!--36--><td class=""><b>SS:</b></td>
+        <!--34--><td class="ok"><b>XOR</b>a,ib</td>
+        <!--35--><td class="ok"><b>XOR</b>a,iw</td>
+        <!--36--><td class="pfx"><b>SS:</b></td>
         <!--37--><td class=""><b>AAA</b></td>
         <!--38--><td class="mrm"><b>CMP</b>rm,r8</td>
         <!--39--><td class="mrm"><b>CMP</b>rm,r16</td>
         <!--3A--><td class="mrm"><b>CMP</b>r8,rm</td>
         <!--3B--><td class="mrm"><b>CMP</b>r16,rm</td>
-        <!--3C--><td class=""><b>CMP</b>a,ib</td>
-        <!--3D--><td class=""><b>CMP</b>a,iw</td>
-        <!--3E--><td class=""><b>DS:</b></td>
+        <!--3C--><td class="ok"><b>CMP</b>a,ib</td>
+        <!--3D--><td class="ok"><b>CMP</b>a,iw</td>
+        <!--3E--><td class="pfx"><b>DS:</b></td>
         <!--3F--><td class=""><b>AAS</b></td>
     </tr>
     <tr>
         <th>40</th>
-        <!--40--><td class=""><b>INC</b>ax</td>
-        <!--41--><td class=""><b>INC</b>cx</td>
-        <!--42--><td class=""><b>INC</b>dx</td>
-        <!--43--><td class=""><b>INC</b>bx</td>
-        <!--44--><td class=""><b>INC</b>sp</td>
-        <!--45--><td class=""><b>INC</b>bp</td>
-        <!--46--><td class=""><b>INC</b>si</td>
-        <!--47--><td class=""><b>INC</b>di</td>
-        <!--48--><td class=""><b>DEC</b>ax</td>
-        <!--49--><td class=""><b>DEC</b>cx</td>
-        <!--4A--><td class=""><b>DEC</b>dx</td>
-        <!--4B--><td class=""><b>DEC</b>bx</td>
-        <!--4C--><td class=""><b>DEC</b>sp</td>
-        <!--4D--><td class=""><b>DEC</b>bp</td>
-        <!--4E--><td class=""><b>DEC</b>si</td>
-        <!--4F--><td class=""><b>DEC</b>di</td>
+        <!--40--><td class="ok"><b>INC</b>ax</td>
+        <!--41--><td class="ok"><b>INC</b>cx</td>
+        <!--42--><td class="ok"><b>INC</b>dx</td>
+        <!--43--><td class="ok"><b>INC</b>bx</td>
+        <!--44--><td class="ok"><b>INC</b>sp</td>
+        <!--45--><td class="ok"><b>INC</b>bp</td>
+        <!--46--><td class="ok"><b>INC</b>si</td>
+        <!--47--><td class="ok"><b>INC</b>di</td>
+        <!--48--><td class="ok"><b>DEC</b>ax</td>
+        <!--49--><td class="ok"><b>DEC</b>cx</td>
+        <!--4A--><td class="ok"><b>DEC</b>dx</td>
+        <!--4B--><td class="ok"><b>DEC</b>bx</td>
+        <!--4C--><td class="ok"><b>DEC</b>sp</td>
+        <!--4D--><td class="ok"><b>DEC</b>bp</td>
+        <!--4E--><td class="ok"><b>DEC</b>si</td>
+        <!--4F--><td class="ok"><b>DEC</b>di</td>
     </tr>
     <tr>
         <th>50</th>
@@ -316,10 +316,10 @@
     </tr>
     <tr>
         <th>F0</th>
-        <!--F0--><td class=""><b>LOCK:</b></td>
+        <!--F0--><td class="pfx"><b>LOCK:</b></td>
         <!--F1--><td class=""><b>INT</b>1</td>
-        <!--F2--><td class=""><b>REPNZ:</b></td>
-        <!--F3--><td class=""><b>REPZ:</b></td>
+        <!--F2--><td class="pfx"><b>REPNZ:</b></td>
+        <!--F3--><td class="pfx"><b>REPZ:</b></td>
         <!--F4--><td class=""><b>HLT</b></td>
         <!--F5--><td class=""><b>CMC</b></td>
         <!--F6--><td class=""><b>*GRP1*</b>8</td>
