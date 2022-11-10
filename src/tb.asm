@@ -1,5 +1,8 @@
 
         org     0
+        push    bx
+        pop     di
+
         mov     ax, $FFFF
         inc     ax
         mov     bx, D1

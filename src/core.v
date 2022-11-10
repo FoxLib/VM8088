@@ -24,9 +24,9 @@ reg [15:0]  bp          = 16'h1008;
 reg [15:0]  si          = 16'h2009;
 reg [15:0]  di          = 16'h030A;
 // ---------------------------------------------------------------------
-reg [15:0]  es          = 16'h0000;
+reg [15:0]  es          = 16'h0402;
 reg [15:0]  cs          = 16'h0000;
-reg [15:0]  ss          = 16'h0000;
+reg [15:0]  ss          = 16'h0001;
 reg [15:0]  ds          = 16'h0000;
 // ---------------------------------------------------------------------
 reg         bus         = 1'b0;
@@ -70,7 +70,13 @@ localparam
     MODRM_WB        = 7,
     MODRM_WB_MEM    = 8,
     MODRM_WB_END    = 9,
-    EXEC            = 10;
+    EXEC            = 10,
+    PUSH            = 11,
+    PUSH2           = 12,
+    PUSH3           = 13,
+    POP             = 14,
+    POP2            = 15,
+    POP3            = 16;
 
 localparam
 
@@ -176,6 +182,25 @@ else if (locked) case (phi)
                 // <ALU> modrm
                 8'b00xx_x0xx: phi <= MODRM;
 
+                // PUSH es, cs, ss, cs
+                8'b000x_x110: begin
+
+                    phi <= PUSH;
+
+                    case (in[4:3])
+                    2'b00: wb <= es; 2'b01: wb <= cs;
+                    2'b10: wb <= ss; 2'b11: wb <= ds;
+                    endcase
+
+                end
+
+                // POP seg; POP r
+                8'b000x_x111,
+                8'b0101_1xxx: begin phi <= POP; phi_next <= EXEC; end
+
+                // PUSH r
+                8'b0101_0xxx: begin size <= 1'b1; src1 <= SRC_REG; end
+
                 // MOV r, i
                 8'b1011_xxxx: size <= in[3];
 
@@ -253,6 +278,31 @@ else if (locked) case (phi)
 
         endcase
 
+        // #07,#0F,#16,#1F POP seg
+        8'b000x_x111: begin
+
+            phi <= PREPARE;
+
+            case (opcode[4:3])
+            2'b00: es <= wb;
+            2'b01: cs <= wb;
+            2'b10: ss <= wb;
+            2'b11: ds <= wb;
+            endcase
+
+        end
+
+        // POP r
+        8'b0101_1xxx: begin
+
+            phi         <= MODRM_WB;
+            phi_next    <= PREPARE;
+            dir         <= 1'b1;
+            size        <= 1'b1;
+            modrm[5:3]  <= opcode[2:0];
+
+        end
+
         // #40-4F INC/DEC
         8'b0100_xxxx: case (fn)
 
@@ -278,6 +328,9 @@ else if (locked) case (phi)
             end
 
         endcase
+
+        // #50-57 PUSH r
+        8'b0101_0xxx: begin wb <= r1; phi <= PUSH; end
 
         // #B0-BF MOV r, imm
         8'b1011_xxxx: case (fn)
@@ -306,7 +359,7 @@ else if (locked) case (phi)
 
         endcase
 
-        // Короткий переход
+        // #EB, #70-7F Jccc, JMP short
         8'b1110_1011,
         8'b0111_xxxx: begin phi <= PREPARE; ip <= ip + {{8{in[7]}}, in} + 1'b1; end
 
@@ -453,6 +506,48 @@ else if (locked) case (phi)
         we  <= 1'b0;
 
     end
+
+    // ~=~=~= Процедуры ~=~=~=
+
+    // Запись значения в стек
+    PUSH: begin
+
+        phi <= PUSH2;
+        seg <= ss;
+        ea  <= sp - 1'b1;
+        sp  <= sp - 1'b1;
+        we  <= 1'b1;
+        bus <= 1'b1;
+        out <= wb[15:8];
+
+    end
+
+    // Запись младшего байта
+    PUSH2: begin
+
+        phi <= PUSH3;
+        ea  <= sp - 1'b1;
+        sp  <= sp - 1'b1;
+        out <= wb[7:0];
+
+    end
+
+    // Завершение записи
+    PUSH3: begin phi <= phi_next; we <= 1'b0; bus <= 1'b0; end
+
+    // Извлечение из стека
+    POP: begin
+
+        phi <= POP2;
+        ea  <= sp;
+        sp  <= sp + 1'b1;
+        seg <= ss;
+        bus <= 1'b1;
+
+    end
+
+    POP2: begin phi <= POP3; wb <= in; ea <= sp; sp <= sp + 1'b1; end
+    POP3: begin phi <= phi_next; wb[15:8] <= in; bus <= 1'b0; end
 
 endcase
 
