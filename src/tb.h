@@ -14,6 +14,10 @@ protected:
     int ps_clock = 1, ps_data = 1, kbd_top = 0, kbd_ticker = 0, kbd_phase = 0;
     int kbd[256];
 
+    int         _hs = 1, _vs = 0, x = 0, y = 0;
+    uint8_t*    memory;
+    Vvcard*     vcard;
+
 public:
 
     App() {
@@ -27,6 +31,36 @@ public:
         sdl_renderer  = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_PRESENTVSYNC);
         sdl_screen_texture  = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_BGRA32, SDL_TEXTUREACCESS_STREAMING, 640, 400);
         SDL_SetTextureBlendMode(sdl_screen_texture, SDL_BLENDMODE_NONE);
+
+        // Инициализация
+        vcard = new Vvcard();
+    }
+
+    void tick() {
+
+        vcard->clock = 0; vcard->eval();
+        vcard->clock = 1; vcard->eval();
+
+        vcard->data = 0x1B;
+
+        dsub(vcard->hs, vcard->vs, 65536*(vcard->r*16) + 256*(vcard->g*16) + vcard->b*16);
+    }
+
+    // Рендеринг области VGA рисования
+    void dsub(int hs, int vs, uint color) {
+
+        if (hs) x++;
+
+        // Отслеживание изменений HS/VS
+        if (_hs == 0 && hs == 1) { x = 0; y++; }
+        if (_vs == 1 && vs == 0) { x = 0; y = 0; }
+
+        // Сохранить предыдущее значение
+        _hs = hs;
+        _vs = vs;
+
+        // Вывод на экран
+        pset(x - 48, y - 35, color);
     }
 
     // Ожидание событий

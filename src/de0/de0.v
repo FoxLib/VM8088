@@ -90,7 +90,31 @@ de0pll unit_pll
     .locked     (locked)
 );
 
-// -----------------------------------------------------------------------------
+
+// ПРОЦЕССОР
+// ---------------------------------------------------------------------
+
+wire [19:0] address;
+reg  [ 7:0] in;
+wire [ 7:0] out;
+wire        we;
+
+core U2
+(
+    .clock      (clock_25),
+    .reset_n    (1'b1),
+    .locked     (locked),
+    .address    (address),
+    .in         (in),
+    .out        (out),
+    .we         (we)
+);
+
+// ВИДЕОКАРТА
+// ---------------------------------------------------------------------
+
+wire [13:0] vcard_address;
+wire [ 7:0] vcard_data;
 
 vcard U1
 (
@@ -104,6 +128,66 @@ vcard U1
     .data       (vcard_data)
 );
 
+// МОДУЛИ ПАМЯТИ
+// ---------------------------------------------------------------------
+
+// Общая память
+m256k M0
+(
+    .clock      (clock_100),
+    .a0         (address[17:0]),
+    .q0         (m256k_in),
+    .d0         (out),
+    .w0         (m256k_we),
+);
+
+// CGA модуль
+m16k M1
+(
+    .clock      (clock_100),
+    .a0         (address[13:0]),
+    .q0         (m16k_in),
+    .d0         (out),
+    .w0         (m16k_we),
+    .a1         (vcard_address),
+    .q1         (vcard_data)
+);
+
+// BIOS
+m8k M2
+(
+    .clock      (clock_100),
+    .a0         (address[12:0]),
+    .q0         (m8k_in),
+    .d0         (out),
+    .w0         (m8k_we),
+);
+
+// РОУТЕР ПАМЯТИ
+// ---------------------------------------------------------------------
+
+wire [7:0] m8k_in;   reg m8k_we;
+wire [7:0] m16k_in;  reg m16k_we;
+wire [7:0] m256k_in; reg m256k_we;
+
+always @(*) begin
+
+    m16k_we  = 1'b0;
+    m256k_we = 1'b0;
+    m8k_we   = 1'b0;
+
+    casex (address)
+
+        20'b00xx_xxxxxxxx_xxxxxxxx: begin in = m256k_in; m256k_we = we; end // 00000 256K
+        20'b1011_10xxxxxx_xxxxxxxx: begin in = m16k_in;  m16k_we  = we; end // B8000 16K
+        20'b1111_111xxxxx_xxxxxxxx: begin in = m8k_in;   m8k_we   = we; end // FE000 8K
+        default: in = 8'hFF;
+
+    endcase
+
+end
+
 endmodule
 
 `include "../vcard.v"
+`include "../core.v"

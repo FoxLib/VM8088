@@ -1,3 +1,5 @@
+/* verilator lint_off WIDTH */
+
 module vcard
 (
     input               clock,
@@ -33,6 +35,23 @@ reg  [ 8:0] y;
 wire [ 9:0] X = (x - hz_back);
 wire [ 8:0] Y = (y - vt_back);
 // ---------------------------------------------------------------------
+// Цвет на 2x пикселя
+reg  [11:0] color;
+
+// Один из цветов в байте
+wire [1:0] id =
+    X[2:1] == 2'b11 ? data[7:6] :
+    X[2:1] == 2'b10 ? data[5:4] :
+    X[2:1] == 2'b01 ? data[3:2] :
+                      data[1:0];
+
+// Конвертирование цвета
+wire [11:0] cl =
+    id == 2'b00 ? 12'h111 :
+    id == 2'b01 ? 12'hC0C :
+    id == 2'b10 ? 12'h0CC :
+                  12'hCCC;
+
 always @(posedge clock) begin
 
     {r, g, b} <= 12'h000;
@@ -41,7 +60,12 @@ always @(posedge clock) begin
     x <= xmax ?         0 : x + 1;
     y <= xmax ? (ymax ? 0 : y + 1) : y;
 
-    if (shown) {r, g, b} <= 12'hCCC;
+    case (X[0])
+    1'b0: address <= Y[8:1] + X[8:3];
+    1'b1: color   <= cl;
+    endcase
+
+    if (shown) {r, g, b} <= color;
 
 end
 endmodule

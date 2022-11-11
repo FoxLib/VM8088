@@ -1,5 +1,7 @@
-#all: icarus app
-all: icarus
+LIB=/usr/share/verilator/include
+
+all: icarus app
+#all: icarus
 icarus:
 	fasm tb.asm tb.bin
 	php utils/bin2hex.php tb.bin tb.hex
@@ -8,9 +10,13 @@ icarus:
 	rm tb.qqq
 wave:
 	gtkwave tb.gtkw
-app:
-	g++ -o tb tb.cc -lSDL2
+app: ver
+
+	g++ -o tb -I$(LIB) $(LIB)/verilated.cpp tb.cc obj_dir/Vvcard__ALL.a -lSDL2
 	strip tb
 	./tb
+ver:
+	verilator -cc vcard.v
+	cd obj_dir && make -f Vvcard.mk
 clean:
 	rm tb tb.vcd tb.hex tb.bin
