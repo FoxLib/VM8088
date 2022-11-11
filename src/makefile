@@ -11,12 +11,13 @@ icarus:
 wave:
 	gtkwave tb.gtkw
 app: ver
-
-	g++ -o tb -I$(LIB) $(LIB)/verilated.cpp tb.cc obj_dir/Vvcard__ALL.a -lSDL2
+	g++ -o tb -I$(LIB) $(LIB)/verilated.cpp tb.cc obj_dir/Vvcard__ALL.a obj_dir/Vcore__ALL.a -lSDL2
 	strip tb
 	./tb
 ver:
 	verilator -cc vcard.v
+	verilator -cc core.v
 	cd obj_dir && make -f Vvcard.mk
+	cd obj_dir && make -f Vcore.mk
 clean:
 	rm tb tb.vcd tb.hex tb.bin

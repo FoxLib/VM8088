@@ -17,6 +17,7 @@ protected:
     int         _hs = 1, _vs = 0, x = 0, y = 0;
     uint8_t*    memory;
     Vvcard*     vcard;
+    Vcore*      core;
 
 public:
 
@@ -34,14 +35,22 @@ public:
 
         // Инициализация
         vcard = new Vvcard();
+        core  = new Vcore();
+
+        memory = (uint8_t*) malloc(1024*1024);
     }
 
     void tick() {
 
+        core->in = memory[ core->address ];
+        if (core->we) memory[ core->address ] = core->out;
+
+        vcard->data = memory[ 0xA0000 + vcard->address ];
+
+        core->clock  = 0; core->eval();
+        core->clock  = 1; core->eval();
         vcard->clock = 0; vcard->eval();
         vcard->clock = 1; vcard->eval();
-
-        vcard->data = 0x1B;
 
         dsub(vcard->hs, vcard->vs, 65536*(vcard->r*16) + 256*(vcard->g*16) + vcard->b*16);
     }

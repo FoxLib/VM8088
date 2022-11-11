@@ -1,4 +1,5 @@
 #include "obj_dir/Vvcard.h"
+#include "obj_dir/Vcore.h"
 #include "tb.h"
 
 int main(int argc, char* argv[]) {

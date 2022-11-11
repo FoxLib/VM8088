@@ -179,7 +179,7 @@ always @(*) begin
     casex (address)
 
         20'b00xx_xxxxxxxx_xxxxxxxx: begin in = m256k_in; m256k_we = we; end // 00000 256K
-        20'b1011_10xxxxxx_xxxxxxxx: begin in = m16k_in;  m16k_we  = we; end // B8000 16K
+        20'b1010_00xxxxxx_xxxxxxxx: begin in = m16k_in;  m16k_we  = we; end // A0000 16K
         20'b1111_111xxxxx_xxxxxxxx: begin in = m8k_in;   m8k_we   = we; end // FE000 8K
         default: in = 8'hFF;
 

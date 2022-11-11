@@ -1,4 +1,6 @@
-/* >> HELLO WORLD << */
+/* verilator lint_off WIDTH */
+/* verilator lint_off CASEX */
+/* verilator lint_off CASEINCOMPLETE */
 
 module core
 (
