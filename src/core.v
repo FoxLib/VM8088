@@ -224,6 +224,12 @@ else if (locked) case (phi)
 
                 end
 
+                // CLC, STC; CLI, STI; CLD, STD; CMC
+                8'b1111_100x: begin flags[CF] <= in[0]; phi <= PREPARE; end
+                8'b1111_101x: begin flags[IF] <= in[0]; phi <= PREPARE; end
+                8'b1111_110x: begin flags[DF] <= in[0]; phi <= PREPARE; end
+                8'b1111_0101: begin flags[CF] <= ~flags[CF]; phi <= PREPARE; end
+
             endcase
 
         end

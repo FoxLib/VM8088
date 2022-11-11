@@ -40,6 +40,7 @@ public:
         memory = (uint8_t*) malloc(1024*1024);
     }
 
+    // Один тик
     void tick() {
 
         core->in = memory[ core->address ];
