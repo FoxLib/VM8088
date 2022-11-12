@@ -73,14 +73,14 @@ wire [ 7:0] vcard_data;
 
 vcard U1
 (
-    .clock      (clock_25),
-    .r          (vga_r[4:1]),
-    .g          (vga_g[5:2]),
-    .b          (vga_b[4:1]),
-    .hs         (vga_hs),
-    .vs         (vga_vs),
-    .address    (vcard_address),
-    .data       (vcard_data)
+    .clock          (clock_25),
+    .r              (vga_r[4:1]),
+    .g              (vga_g[5:2]),
+    .b              (vga_b[4:1]),
+    .hs             (vga_hs),
+    .vs             (vga_vs),
+    .cga_address    (vcard_address),
+    .cga_data       (vcard_data)
 );
 
 // БЛОКИ ПАМЯТИ
@@ -130,7 +130,7 @@ always @(*) begin
 
     casex (address)
 
-        20'b0000_00xxxxxx_xxxxxxxx: begin in = m16k_in; m16k_we = we; end // 00000 DATA 16K        
+        20'b0000_00xxxxxx_xxxxxxxx: begin in = m16k_in; m16k_we = we; end // 00000 DATA 16K
         20'b1011_10xxxxxx_xxxxxxxx: begin in = mcga_in; mcga_we = we; end // B8000 CGA  16k
         20'b1111_111xxxxx_xxxxxxxx: begin in = m8k_in;  m8k_we  = we; end // FE000 BIOS 8k
         default: in = 8'hFF;

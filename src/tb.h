@@ -38,6 +38,15 @@ public:
         core  = new Vcore();
 
         memory = (uint8_t*) malloc(1024*1024);
+
+        for (int i = 0; i < 16384; i++) memory[0xA0000 + i] = 0x12;
+        for (int i = 0; i < 4096; i++) memory[0xB9000 + i] = font[i];
+        for (int i = 0; i < 4096; i += 2) {
+
+            memory[0xB8000 + i] = (i >> 1);
+            memory[0xB8001 + i] = 0x17;
+        }
+
     }
 
     // Один тик
@@ -46,7 +55,9 @@ public:
         core->in = memory[ core->address ];
         if (core->we) memory[ core->address ] = core->out;
 
-        vcard->data = memory[ 0xA0000 + vcard->address ];
+        vcard->cursor = 0;
+        vcard->cga_data = memory[ 0xA0000 + vcard->cga_address ];
+        vcard->txt_data = memory[ 0xB8000 + vcard->txt_address ];
 
         core->clock  = 0; core->eval();
         core->clock  = 1; core->eval();
@@ -70,7 +81,7 @@ public:
         _vs = vs;
 
         // Вывод на экран
-        pset(x - 48, y - 35, color);
+        pset(x - 49, y - 35, color);
     }
 
     // Ожидание событий

@@ -118,14 +118,17 @@ wire [ 7:0] vcard_data;
 
 vcard U1
 (
-    .clock      (clock_25),
-    .r          (VGA_R),
-    .g          (VGA_G),
-    .b          (VGA_B),
-    .hs         (VGA_HS),
-    .vs         (VGA_VS),
-    .address    (vcard_address),
-    .data       (vcard_data)
+    .clock          (clock_25),
+    .r              (VGA_R),
+    .g              (VGA_G),
+    .b              (VGA_B),
+    .hs             (VGA_HS),
+    .vs             (VGA_VS),
+    .cga            (1'b1),
+    .cga_address    (vcard_address),
+    .cga_data       (vcard_data),
+    .txt_address    (txt_address),
+    .txt_in         (txt_in)
 );
 
 // МОДУЛИ ПАМЯТИ
