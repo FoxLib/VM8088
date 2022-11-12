@@ -181,8 +181,27 @@ else if (locked) case (phi)
 
             casex (in)
 
+                // CLC, STC; CLI, STI; CLD, STD; CMC
+                8'b1111_100x: begin flags[CF] <= in[0]; phi <= PREPARE; end
+                8'b1111_101x: begin flags[IF] <= in[0]; phi <= PREPARE; end
+                8'b1111_110x: begin flags[DF] <= in[0]; phi <= PREPARE; end
+                8'b1111_0101: begin flags[CF] <= ~flags[CF]; phi <= PREPARE; end
+
+                // NOP, FWAIT; HLT
+                8'b1001_0000,
+                8'b1001_1011: begin phi <= PREPARE; end
+                8'b1111_0100: begin phi <= PREPARE; ip <= ip; end
+
+                // CBW, CWD, SALC
+                8'b1001_1000: begin phi <= PREPARE; ax[15:8] <= {8{ax[7]}}; end
+                8'b1001_1001: begin phi <= PREPARE; dx <= {16{ax[15]}}; end
+                8'b1101_0110: begin phi <= PREPARE; ax[7:0] <= {8{flags[CF]}}; end
+
                 // <ALU> modrm
-                8'b00xx_x0xx: phi <= MODRM;
+                8'b00xx_x0xx: begin phi <= MODRM; end
+
+                // <ALU> mrm, i
+                8'b1000_00xx: begin dir <= 1'b0; phi <= MODRM; end
 
                 // PUSH es, cs, ss, cs
                 8'b000x_x110: begin
@@ -206,8 +225,9 @@ else if (locked) case (phi)
                 // MOV r, i
                 8'b1011_xxxx: size <= in[3];
 
-                // INC|DEC r16
-                8'b0100_xxxx: begin
+                // INC|DEC r16; XCHG a, r
+                8'b0100_xxxx,
+                8'b1001_0xxx: begin
 
                     size <= 1'b1;
                     src1 <= SRC_REG;
@@ -223,12 +243,6 @@ else if (locked) case (phi)
                     ip  <= ip + 2;
 
                 end
-
-                // CLC, STC; CLI, STI; CLD, STD; CMC
-                8'b1111_100x: begin flags[CF] <= in[0]; phi <= PREPARE; end
-                8'b1111_101x: begin flags[IF] <= in[0]; phi <= PREPARE; end
-                8'b1111_110x: begin flags[DF] <= in[0]; phi <= PREPARE; end
-                8'b1111_0101: begin flags[CF] <= ~flags[CF]; phi <= PREPARE; end
 
             endcase
 
@@ -300,17 +314,6 @@ else if (locked) case (phi)
 
         end
 
-        // POP r
-        8'b0101_1xxx: begin
-
-            phi         <= MODRM_WB;
-            phi_next    <= PREPARE;
-            dir         <= 1'b1;
-            size        <= 1'b1;
-            modrm[5:3]  <= opcode[2:0];
-
-        end
-
         // #40-4F INC/DEC
         8'b0100_xxxx: case (fn)
 
@@ -339,6 +342,65 @@ else if (locked) case (phi)
 
         // #50-57 PUSH r
         8'b0101_0xxx: begin wb <= r1; phi <= PUSH; end
+
+        // #58-5F POP r
+        8'b0101_1xxx: begin
+
+            phi         <= MODRM_WB;
+            phi_next    <= PREPARE;
+            dir         <= 1'b1;
+            size        <= 1'b1;
+            modrm[5:3]  <= opcode[2:0];
+
+        end
+
+        // ALU modrm
+        8'b1000_00xx: case (fn)
+
+            // Обнуление BUS
+            // Читать младший байт
+            0: begin
+
+                if (bus == 1'b0) begin
+
+                    fn  <= 1;
+                    bus <= 1'b0;
+                    op2 <= opcode[1:0] == 2'b11 ? {{8{in[7]}}, in} : in;
+                    fn  <= size ? 1 : 2;
+                    ip  <= ip + 1'b1;
+
+                end
+
+                bus <= 1'b0;
+                alu <= modrm[5:3];
+
+            end
+
+            // Читать старший байт
+            1: begin fn <= 2; op2[15:8] <= in; ip <= ip + 1'b1; end
+
+            // Вычислить и записать результат
+            2: begin
+
+                phi   <= (alu == ALU_CMP ? PREPARE : MODRM_WB);
+                bus   <= (alu != ALU_CMP);
+                wb    <= ar;
+                flags <= af;
+
+            end
+
+        endcase
+
+        // #90-97 XCHG a, r
+        8'b1001_0xxx: begin
+
+            phi <= MODRM_WB;
+            ax  <= r1;
+            dir <= 1'b1;
+            wb  <= ax;
+            modrm[5:3] <= regn;
+
+        end
 
         // #B0-BF MOV r, imm
         8'b1011_xxxx: case (fn)

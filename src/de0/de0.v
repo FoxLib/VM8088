@@ -124,7 +124,7 @@ vcard U1
     .b              (VGA_B),
     .hs             (VGA_HS),
     .vs             (VGA_VS),
-    .cga            (1'b1),
+    .cga            (1'b0),
     .cga_address    (vcard_address),
     .cga_data       (vcard_data),
     .txt_address    (txt_address),

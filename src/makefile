@@ -1,7 +1,7 @@
 LIB=/usr/share/verilator/include
 
-all: icarus app
-#all: icarus
+#all: icarus app
+all: icarus
 icarus:
 	fasm tb.asm tb.bin
 	php utils/bin2hex.php tb.bin tb.hex
