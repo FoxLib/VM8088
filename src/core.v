@@ -220,12 +220,25 @@ else if (locked) case (phi)
 
                 end
 
-                // POP seg; POP r
+                // POP seg; POP r; POPF
                 8'b000x_x111,
-                8'b0101_1xxx: begin phi <= POP; phi_next <= EXEC; end
+                8'b0101_1xxx,
+                8'b1001_1101: begin phi <= POP; phi_next <= EXEC; end
 
                 // PUSH r
                 8'b0101_0xxx: begin size <= 1'b1; src1 <= SRC_REG; end
+
+                // TEST modrm
+                8'b1000_010x: begin phi <= MODRM; alu <= ALU_AND; end
+
+                // PUSHF
+                8'b1001_1100: begin wb <= flags | 2'b10; phi <= PUSH; phi_next <= PREPARE; end
+
+                // SAHF
+                8'b1001_1110: begin flags[7:0] <= ax[15:8]; phi <= PREPARE; end
+
+                // LAHF
+                8'b1001_1111: begin ax[15:8] <= flags[7:0]; phi <= PREPARE; end
 
                 // MOV r, i
                 8'b1011_xxxx: begin size <= in[3]; end
@@ -425,6 +438,9 @@ else if (locked) case (phi)
 
         endcase
 
+        // #84-85 TEST rmr
+        8'b1000_010x: begin phi <= PREPARE; flags <= af; bus <= 1'b0; end
+
         // #88-8B MOV mrm
         8'b1000_10xx: begin phi <= MODRM_WB; wb <= op2; end
 
@@ -438,6 +454,9 @@ else if (locked) case (phi)
             modrm[5:3] <= regn;
 
         end
+
+        // #9D POPF
+        8'b1001_1101: begin flags <= wb | 2'b10; phi <= PREPARE; end
 
         // #B0-BF MOV r, imm
         8'b1011_xxxx: case (fn)

@@ -1,6 +1,8 @@
 
         org     0
-        nop
+        mov     ax, 0
+        test    ax, [D1]
+
         mov     cx, [cs:D1]
         mov     cx, dx
         add     word [D1], -1
