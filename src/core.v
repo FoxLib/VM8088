@@ -41,12 +41,14 @@ reg [ 2:0]  alu         = 3'h0;
 reg [15:0]  op1         = 16'h0000;
 reg [15:0]  op2         = 16'h0000;
 reg [15:0]  wb          = 16'h0000;
-reg [ 7:0]  opcode      = 8'h00;             // Сохраненный опкод
+reg [ 2:0]  pcnt        = 1'b0;             // Кол-во префиксов
+reg [ 7:0]  opcode      = 8'h00;            // Сохраненный опкод
 reg [ 7:0]  modrm       = 8'h00;
 reg         size        = 1'b0;
 reg         dir         = 1'b0;
 // ---------------------------------------------------------------------
 reg [15:0]  ip          = 16'h0000;
+reg [15:0]  ipstart     = 16'h0000;         // Где начало инструкции
 reg [11:0]  flags       = 12'b0000_0000_0010;
 //                            ODIT SZ A  P C
 // ---------------------------------------------------------------------
@@ -136,6 +138,7 @@ if (reset_n == 1'b0) begin
     phi     <= 1'b0;
     o_seg_  <= 1'b0;
     o_rep_  <= 2'h0;
+    pcnt    <= 3'b0;
 
 end
 // Операции процессора разрешены
@@ -159,20 +162,22 @@ else if (locked) case (phi)
         case (in)
 
         // Префиксы
-        8'h26: begin o_seg_ <= 1'b1; seg <= es; end
-        8'h2E: begin o_seg_ <= 1'b1; seg <= cs; end
-        8'h36: begin o_seg_ <= 1'b1; seg <= ss; end
-        8'h3E: begin o_seg_ <= 1'b1; seg <= ds; end
-        8'hF2: begin o_rep_ <= {1'b1, in[0]}; end
+        8'h26: begin o_seg_ <= 1'b1; seg <= es; pcnt <= pcnt + 1; end
+        8'h2E: begin o_seg_ <= 1'b1; seg <= cs; pcnt <= pcnt + 1; end
+        8'h36: begin o_seg_ <= 1'b1; seg <= ss; pcnt <= pcnt + 1; end
+        8'h3E: begin o_seg_ <= 1'b1; seg <= ds; pcnt <= pcnt + 1; end
+        8'hF2: begin o_rep_ <= {1'b1, in[0]};   pcnt <= pcnt + 1; end
 
         // Не реализованные префиксы, не нужные никому
-        8'hF0, 8'h64, 8'h65, 8'h66, 8'h67: begin end
+        8'hF0, 8'h64, 8'h65, 8'h66, 8'h67: begin  pcnt <= pcnt + 1; end
 
         // Опкоды, первый такт
         default: begin
 
             phi     <= EXEC;
             opcode  <= in;
+            ipstart <= ip - pcnt;
+            pcnt    <= 0;
 
             // Защелкивание префиксов и опкода на будущее
             o_seg <= o_seg_; o_seg_ <= 1'h0;
@@ -223,7 +228,10 @@ else if (locked) case (phi)
                 8'b0101_0xxx: begin size <= 1'b1; src1 <= SRC_REG; end
 
                 // MOV r, i
-                8'b1011_xxxx: size <= in[3];
+                8'b1011_xxxx: begin size <= in[3]; end
+
+                // MOV mrm
+                8'b1000_10xx: begin phi <= MODRM; end
 
                 // INC|DEC r16; XCHG a, r
                 8'b0100_xxxx,
@@ -354,7 +362,33 @@ else if (locked) case (phi)
 
         end
 
-        // ALU modrm
+        // #68,6A PUSH i16, i8
+        8'b0110_10x0: case (fn)
+
+            // PUSH i8
+            0: begin
+
+                fn <= 1;
+                ip <= ip + 1;
+                wb <= opcode[1] ? {{8{in[7]}}, in} : in;
+
+                if (opcode[1]) phi <= PUSH;
+
+            end
+
+            // PUSH i16
+            1: begin
+
+                fn <= 2;
+                ip <= ip + 1;
+                phi <= PUSH;
+                wb[15:8] <= in;
+
+            end
+
+        endcase
+
+        // #80-83 ALU modrm
         8'b1000_00xx: case (fn)
 
             // Обнуление BUS
@@ -390,6 +424,9 @@ else if (locked) case (phi)
             end
 
         endcase
+
+        // #88-8B MOV mrm
+        8'b1000_10xx: begin phi <= MODRM_WB; wb <= op2; end
 
         // #90-97 XCHG a, r
         8'b1001_0xxx: begin
