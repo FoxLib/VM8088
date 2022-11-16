@@ -46,6 +46,7 @@ reg [ 7:0]  opcode      = 8'h00;            // Сохраненный опкод
 reg [ 7:0]  modrm       = 8'h00;
 reg         size        = 1'b0;
 reg         dir         = 1'b0;
+reg         ignoreo     = 1'b0;
 // ---------------------------------------------------------------------
 reg [15:0]  ip          = 16'h0000;
 reg [15:0]  ipstart     = 16'h0000;         // Где начало инструкции
@@ -150,6 +151,7 @@ else if (locked) case (phi)
         // Инициализация регистров управления
         we          <= 1'b0;
         fn          <= 1'b0;
+        ignoreo     <= 1'b0;
         src1        <= SRC_I20; // Источник op1 modrm
         src2        <= SRC_I53; // Источник op2 modrm
         size        <= in[0];
@@ -226,7 +228,7 @@ else if (locked) case (phi)
 
           if (in[2:0] == 3'b110)
                begin phi <= MODRM_DISP16; end
-          else begin phi <= MODRM_READOP; bus <= 1'b1; end
+          else begin phi <= ignoreo ? EXEC : MODRM_READOP; bus <= ~ignoreo; end
 
         end
         2'b01: phi <= MODRM_DISP8;
@@ -245,8 +247,8 @@ else if (locked) case (phi)
 
         ip  <= ip + 1'b1;
         ea  <= ea + {{8{in[7]}}, in};
-        phi <= MODRM_READOP;
-        bus <= 1'b1;
+        phi <=  ignoreo ? EXEC : MODRM_READOP;
+        bus <= ~ignoreo;
 
     end
 
@@ -264,8 +266,8 @@ else if (locked) case (phi)
 
         ip  <= ip + 1'b1;
         ea  <= ea + {in, 8'h00};
-        phi <= MODRM_READOP;
-        bus <= 1'b1;
+        phi <=  ignoreo ? EXEC : MODRM_READOP;
+        bus <= ~ignoreo;
 
     end
 

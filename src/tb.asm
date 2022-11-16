@@ -1,11 +1,8 @@
 
         org     0
-        mov     ax, 0
-        test    ax, [D1]
-
+        xchg    [bx], bl
         mov     cx, [cs:D1]
         mov     cx, dx
-        add     word [D1], -1
         mov     ax, $FFFF
         xchg    ax, cx
         dec     bx

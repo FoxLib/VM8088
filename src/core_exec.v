@@ -1,4 +1,4 @@
-// #00-3F АЛУ modrm
+// 00-3F АЛУ modrm
 8'b00xx_x0xx: begin
 
     phi   <= (alu == ALU_CMP ? PREPARE : MODRM_WB);
@@ -8,7 +8,7 @@
 
 end
 
-// #00-3F АЛУ аккумулятор
+// 00-3F АЛУ аккумулятор
 8'b00xx_x10x: case (fn)
 
     // 8 BIT
@@ -44,7 +44,7 @@ end
 
 endcase
 
-// #07,#0F,#16,#1F POP seg
+// 07,0F,16,1F POP seg
 8'b000x_x111: begin
 
     phi <= PREPARE;
@@ -58,7 +58,7 @@ endcase
 
 end
 
-// #40-4F INC/DEC
+// 40-4F INC/DEC
 8'b0100_xxxx: case (fn)
 
     // Установка операндов
@@ -84,10 +84,10 @@ end
 
 endcase
 
-// #50-57 PUSH r
+// 50-57 PUSH r
 8'b0101_0xxx: begin wb <= r1; phi <= PUSH; end
 
-// #58-5F POP r
+// 58-5F POP r
 8'b0101_1xxx: begin
 
     phi         <= MODRM_WB;
@@ -98,7 +98,7 @@ endcase
 
 end
 
-// #68,6A PUSH i16, i8
+// 68,6A PUSH i16, i8
 8'b0110_10x0: case (fn)
 
     // PUSH i8
@@ -124,7 +124,7 @@ end
 
 endcase
 
-// #80-83 ALU modrm
+// 80-83 ALU modrm
 8'b1000_00xx: case (fn)
 
     // Обнуление BUS
@@ -136,7 +136,7 @@ endcase
             fn  <= 1;
             bus <= 1'b0;
             op2 <= opcode[1:0] == 2'b11 ? {{8{in[7]}}, in} : in;
-            fn  <= size ? 1 : 2;
+            fn  <= opcode[1:0] == 2'b01 ? 1 : 2;
             ip  <= ip + 1'b1;
 
         end
@@ -161,13 +161,21 @@ endcase
 
 endcase
 
-// #84-85 TEST rmr
+// 84-85 TEST mrm
 8'b1000_010x: begin phi <= PREPARE; flags <= af; bus <= 1'b0; end
 
-// #88-8B MOV mrm
+// 86-87 XCHG mrm
+8'b1000_011x: case (fn)
+
+    0: begin wb <= op2; phi <= MODRM_WB; phi_next <= EXEC;    fn  <= 1; end
+    1: begin wb <= op1; phi <= MODRM_WB; phi_next <= PREPARE; dir <= 0; end
+
+endcase
+
+// 88-8B MOV mrm
 8'b1000_10xx: begin phi <= MODRM_WB; wb <= op2; end
 
-// #90-97 XCHG a, r
+// 90-97 XCHG a, r
 8'b1001_0xxx: begin
 
     phi <= MODRM_WB;
@@ -178,10 +186,68 @@ endcase
 
 end
 
-// #9D POPF
+// 9D POPF
 8'b1001_1101: begin flags <= wb | 2'b10; phi <= PREPARE; end
 
-// #B0-BF MOV r, imm
+// A0, A1 MOV a, [m16]
+8'b1010_00xx: case (fn)
+
+    // Считать адрес 16 бит
+    0: begin ea[ 7:0] <= in; ip <= ip + 1; fn <= 1; end
+    1: begin
+
+        fn      <= 2;
+        bus     <= 1;
+        ip      <= ip + 1;
+
+        wb      <= ax;
+        dir     <= 0;
+        modrm   <= 0;
+        ea[15:8] <= in;
+
+        if (opcode[1]) phi <= MODRM_WB;
+
+    end
+
+    // Запись в AL/AX
+    2: begin
+
+        fn  <= 3;
+        ax  <= in;
+        ea  <= ea + 1;
+
+        if (size == 1'b0) begin phi <= PREPARE; bus <= 0; end
+
+    end
+
+    3: begin ax[15:8] <= in; phi <= PREPARE; bus <= 0; end
+
+endcase
+
+// A8-A9 TEST al, imm
+8'b1010_100x: case (fn)
+
+    0: begin
+
+        fn  <= size ? 1 : 2;
+        alu <= ALU_AND;
+        op1 <= ax;
+        op2 <= in;
+        ip  <= ip + 1;
+
+    end
+
+    1: begin fn <= 2; op2[15:8] <= in; ip <= ip + 1; end
+    2: begin
+
+        phi   <= PREPARE;
+        flags <= af;
+
+    end
+
+endcase
+
+// B0-BF MOV r, imm
 8'b1011_xxxx: case (fn)
 
     // Младший байт
@@ -208,9 +274,46 @@ end
 
 endcase
 
-// #70-7F Jccc
-// #E0-E3 LOOP(Z,NZ) JCXZ
-// #EB    JMP short
+// C6,C7 MOV mrm, i
+8'b1100_011x: case (fn)
+
+    // BYTE
+    0: begin
+
+        if (bus == 1'b0) begin
+
+            fn <= 1;
+            wb <= in;
+            ip <= ip + 1;
+
+            if (size == 1'b0) begin
+
+                phi <= MODRM_WB;
+                bus <= 1'b1;
+
+            end
+
+        end
+
+        bus <= 1'b0;
+
+    end
+
+    // WORD
+    1: begin
+
+        wb[15:8] <= in;
+        ip  <= ip + 1;
+        phi <= MODRM_WB;
+        bus <= 1'b1;
+
+    end
+
+endcase
+
+// 70-7F Jccc
+// E0-E3 LOOP(Z,NZ) JCXZ
+// EB    JMP short
 8'b0111_xxxx,
 8'b1110_00xx,
 8'b1110_1011: begin

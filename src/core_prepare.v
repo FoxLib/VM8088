@@ -1,24 +1,34 @@
-// CLC, STC; CLI, STI; CLD, STD; CMC
-8'b1111_100x: begin flags[CF] <= in[0]; phi <= PREPARE; end
-8'b1111_101x: begin flags[IF] <= in[0]; phi <= PREPARE; end
-8'b1111_110x: begin flags[DF] <= in[0]; phi <= PREPARE; end
-8'b1111_0101: begin flags[CF] <= ~flags[CF]; phi <= PREPARE; end
+// <ALU> modrm
+// XCHG modrm
+8'b00xx_x0xx,
+8'b1000_011x: begin phi <= MODRM; end
 
-// NOP, FWAIT; HLT
+// MOV 0=rm,r; 1=r,rm
+8'b1000_10xx: begin phi <= MODRM; ignoreo <= ~in[1]; end
+
+// <ALU> mrm, i
+8'b1000_00xx: begin phi <= MODRM; dir <= 1'b0; end
+
+// MOV rm, i8
+8'b1100_011x: begin phi <= MODRM; dir <= 1'b0; ignoreo <= 1'b1; end
+
+// CLC, STC; CLI, STI; CLD, STD; CMC
+8'b1111_100x: begin phi <= PREPARE; flags[CF] <= in[0]; end
+8'b1111_101x: begin phi <= PREPARE; flags[IF] <= in[0]; end
+8'b1111_110x: begin phi <= PREPARE; flags[DF] <= in[0]; end
+8'b1111_0101: begin phi <= PREPARE; flags[CF] <= ~flags[CF]; end
+
+// NOP, FWAIT
 8'b1001_0000,
 8'b1001_1011: begin phi <= PREPARE; end
+
+// HLT
 8'b1111_0100: begin phi <= PREPARE; ip <= ip; end
 
 // CBW, CWD, SALC
 8'b1001_1000: begin phi <= PREPARE; ax[15:8] <= {8{ax[7]}}; end
 8'b1001_1001: begin phi <= PREPARE; dx <= {16{ax[15]}}; end
 8'b1101_0110: begin phi <= PREPARE; ax[7:0] <= {8{flags[CF]}}; end
-
-// <ALU> modrm
-8'b00xx_x0xx: begin phi <= MODRM; end
-
-// <ALU> mrm, i
-8'b1000_00xx: begin dir <= 1'b0; phi <= MODRM; end
 
 // PUSH es, cs, ss, cs
 8'b000x_x110: begin
@@ -44,19 +54,16 @@ end
 8'b1000_010x: begin phi <= MODRM; alu <= ALU_AND; end
 
 // PUSHF
-8'b1001_1100: begin wb <= flags | 2'b10; phi <= PUSH; phi_next <= PREPARE; end
+8'b1001_1100: begin phi <= PUSH; phi_next <= PREPARE; wb <= flags | 2'b10; end
 
 // SAHF
-8'b1001_1110: begin flags[7:0] <= ax[15:8]; phi <= PREPARE; end
+8'b1001_1110: begin phi <= PREPARE; flags[7:0] <= ax[15:8]; end
 
 // LAHF
-8'b1001_1111: begin ax[15:8] <= flags[7:0]; phi <= PREPARE; end
+8'b1001_1111: begin phi <= PREPARE; ax[15:8] <= flags[7:0]; end
 
 // MOV r, i
 8'b1011_xxxx: begin size <= in[3]; end
-
-// MOV mrm
-8'b1000_10xx: begin phi <= MODRM; end
 
 // INC|DEC r16; XCHG a, r
 8'b0100_xxxx,

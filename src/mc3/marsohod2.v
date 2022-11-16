@@ -69,7 +69,9 @@ core U2
 // ---------------------------------------------------------------------
 
 wire [13:0] vcard_address;
+wire [12:0] vtext_address;
 wire [ 7:0] vcard_data;
+wire [ 7:0] vtext_data;
 
 vcard U1
 (
@@ -79,8 +81,11 @@ vcard U1
     .b              (vga_b[4:1]),
     .hs             (vga_hs),
     .vs             (vga_vs),
+    .cga            (1'b1),
     .cga_address    (vcard_address),
-    .cga_data       (vcard_data)
+    .txt_address    (vtext_address),
+    .cga_data       (vcard_data),
+    .txt_data       (vtext_data),
 );
 
 // БЛОКИ ПАМЯТИ
@@ -112,7 +117,9 @@ m8k M3
     .address_a  (address[12:0]),
     .q_a        (m8k_in),
     .data_a     (out),
-    .wren_a     (m8k_we)
+    .wren_a     (m8k_we),
+    .address_b  (vtext_address),
+    .q_b        (vtext_data)
 );
 
 // РОУТЕР ПАМЯТИ

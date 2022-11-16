@@ -76,7 +76,7 @@
         <!--24--><td class="ok"><b>AND</b>a,ib</td>
         <!--25--><td class="ok"><b>AND</b>a,iw</td>
         <!--26--><td class="pfx"><b>ES:</b></td>
-        <!--27--><td class=""><b>DAA</b></td>
+        <!--27--><td class="inv"><b>DAA</b></td>
         <!--28--><td class="mrm"><b>SUB</b>rm,r8</td>
         <!--29--><td class="mrm"><b>SUB</b>rm,r16</td>
         <!--2A--><td class="mrm"><b>SUB</b>r8,rm</td>
@@ -84,7 +84,7 @@
         <!--2C--><td class="ok"><b>SUB</b>a,ib</td>
         <!--2D--><td class="ok"><b>SUB</b>a,iw</td>
         <!--2E--><td class="pfx"><b>CS:</b></td>
-        <!--2F--><td class=""><b>DAS</b></td>
+        <!--2F--><td class="inv"><b>DAS</b></td>
     </tr>
     <tr>
         <th>30</th>
@@ -95,7 +95,7 @@
         <!--34--><td class="ok"><b>XOR</b>a,ib</td>
         <!--35--><td class="ok"><b>XOR</b>a,iw</td>
         <!--36--><td class="pfx"><b>SS:</b></td>
-        <!--37--><td class=""><b>AAA</b></td>
+        <!--37--><td class="inv"><b>AAA</b></td>
         <!--38--><td class="mrm"><b>CMP</b>rm,r8</td>
         <!--39--><td class="mrm"><b>CMP</b>rm,r16</td>
         <!--3A--><td class="mrm"><b>CMP</b>r8,rm</td>
@@ -103,7 +103,7 @@
         <!--3C--><td class="ok"><b>CMP</b>a,ib</td>
         <!--3D--><td class="ok"><b>CMP</b>a,iw</td>
         <!--3E--><td class="pfx"><b>DS:</b></td>
-        <!--3F--><td class=""><b>AAS</b></td>
+        <!--3F--><td class="inv"><b>AAS</b></td>
     </tr>
     <tr>
         <th>40</th>
@@ -187,10 +187,10 @@
         <!--81--><td class="mrm"><b>*ALU*</b>rm,i16</td>
         <!--82--><td class="mrm"><b>*ALU*</b>rm,i8</td>
         <!--83--><td class="mrm"><b>*ALU*</b>rm,s8</td>
-        <!--84--><td class="ok"><b>TEST</b>rm,r8</td>
-        <!--85--><td class="ok"><b>TEST</b>rm,r16</td>
-        <!--86--><td class=""><b>XCHG</b>rm,r8</td>
-        <!--87--><td class=""><b>XCHG</b>rm,r16</td>
+        <!--84--><td class="mrm"><b>TEST</b>rm,r8</td>
+        <!--85--><td class="mrm"><b>TEST</b>rm,r16</td>
+        <!--86--><td class="mrm"><b>XCHG</b>rm,r8</td>
+        <!--87--><td class="mrm"><b>XCHG</b>rm,r16</td>
         <!--88--><td class="mrm"><b>MOV</b>rm,r8</td>
         <!--89--><td class="mrm"><b>MOV</b>rm,r16</td>
         <!--8A--><td class="mrm"><b>MOV</b>r8,rm</td>
@@ -221,16 +221,16 @@
     </tr>
     <tr>
         <th>A0</th>
-        <!--A0--><td class=""><b>MOV</b>al,[m16]</td>
-        <!--A1--><td class=""><b>MOV</b>ax,[m16]</td>
-        <!--A2--><td class=""><b>MOV</b>[m16],al</td>
-        <!--A3--><td class=""><b>MOV</b>[m16],ax</td>
+        <!--A0--><td class="ok"><b>MOV</b>al,[m16]</td>
+        <!--A1--><td class="ok"><b>MOV</b>ax,[m16]</td>
+        <!--A2--><td class="ok"><b>MOV</b>[m16],al</td>
+        <!--A3--><td class="ok"><b>MOV</b>[m16],ax</td>
         <!--A4--><td class=""><b>MOVSB</b></td>
         <!--A5--><td class=""><b>MOVSW</b></td>
         <!--A6--><td class=""><b>CMPSB</b></td>
         <!--A7--><td class=""><b>CMPSW</b></td>
-        <!--A8--><td class=""><b>TEST</b>al,i8</td>
-        <!--A9--><td class=""><b>TEST</b>al,i16</td>
+        <!--A8--><td class="ok"><b>TEST</b>al,i8</td>
+        <!--A9--><td class="ok"><b>TEST</b>al,i16</td>
         <!--AA--><td class=""><b>STOSB</b></td>
         <!--AB--><td class=""><b>STOSW</b></td>
         <!--AC--><td class=""><b>LODSB</b></td>
@@ -265,8 +265,8 @@
         <!--C3--><td class=""><b>RET</b></td>
         <!--C4--><td class=""><b>LES</b>r16,[ea]</td>
         <!--C5--><td class=""><b>LDS</b>r16,[ea]</td>
-        <!--C6--><td class=""><b>MOV</b>rm,i8</td>
-        <!--C7--><td class=""><b>MOV</b>rm,i16</td>
+        <!--C6--><td class="mrm"><b>MOV</b>rm,i8</td>
+        <!--C7--><td class="mrm"><b>MOV</b>rm,i16</td>
         <!--C8--><td class="inv"><b>ENTER</b>i16,i8</td>
         <!--C9--><td class="inv"><b>LEAVE</b></td>
         <!--CA--><td class=""><b>RETF</b>i16</td>
@@ -297,10 +297,10 @@
     </tr>
     <tr>
         <th>E0</th>
-        <!--E0--><td class=""><b>LOOPNZ</b>b8</td>
-        <!--E1--><td class=""><b>LOOPZ</b>b8</td>
-        <!--E2--><td class=""><b>LOOP</b>b8</td>
-        <!--E3--><td class=""><b>JCXZ</b>b8</td>
+        <!--E0--><td class="ok"><b>LOOPNZ</b>b8</td>
+        <!--E1--><td class="ok"><b>LOOPZ</b>b8</td>
+        <!--E2--><td class="ok"><b>LOOP</b>b8</td>
+        <!--E3--><td class="ok"><b>JCXZ</b>b8</td>
         <!--E4--><td class=""><b>IN</b>al,i8</td>
         <!--E5--><td class=""><b>IN</b>ax,i8</td>
         <!--E6--><td class=""><b>OUT</b>i8,al</td>
