@@ -37,6 +37,7 @@ reg [15:0]  ea          = 16'h0000;         // Эффективный адрес
 reg [ 5:0]  phi         = 1'b0;             // Фаза выполнения
 reg [ 5:0]  phi_next    = 1'b0;             // Фаза выполнения
 reg [ 3:0]  fn          = 1'b0;             // Субфаза phi
+reg [ 2:0]  fn2         = 1'b0;             // Субфаза shift
 reg [ 2:0]  alu         = 3'h0;
 reg [15:0]  op1         = 16'h0000;
 reg [15:0]  op2         = 16'h0000;
@@ -81,7 +82,10 @@ localparam
     PUSH3           = 13,
     POP             = 14,
     POP2            = 15,
-    POP3            = 16;
+    POP3            = 16,
+    SHIFT           = 17,
+    DIVIDE          = 18,
+    INTERRUPT       = 19;
 
 localparam
 
@@ -151,6 +155,7 @@ else if (locked) case (phi)
         // Инициализация регистров управления
         we          <= 1'b0;
         fn          <= 1'b0;
+        fn2         <= 1'b0;
         ignoreo     <= 1'b0;
         src1        <= SRC_I20; // Источник op1 modrm
         src2        <= SRC_I53; // Источник op2 modrm
@@ -384,7 +389,149 @@ else if (locked) case (phi)
     POP2: begin phi <= POP3; wb <= in; ea <= sp; sp <= sp + 1'b1; end
     POP3: begin phi <= phi_next; wb[15:8] <= in; bus <= 1'b0; end
 
+    // Сдвиги
+    // alu, size, op1, op2
+    SHIFT: case (fn2)
+
+        // Инициализация
+        0: begin
+
+            // Вычисление ограничения количества сдвигов
+            if (size) begin wb <= 15; op2 <= op2[4:0]; fn2 <= 1; end
+            else      begin wb <=  7; op2 <= op2[2:0]; fn2 <= 1; end
+
+            // Если сдвиг не задан (0), то сдвиг не срабатывает
+            if ((size ? op2[4:0] : op2[2:0]) == 0) begin bus <= 0; phi <= PREPARE; end
+
+        end
+
+        // Вычисление
+        1: begin
+
+            // Сдвиги
+            if (op2) begin
+
+                op2 <= op2 - 1;
+
+                case (alu)
+
+                    0: // ROL
+                    begin op1 <= size ? {op1[14:0], op1[15]} : {op1[6:0], op1[7]}; end
+
+                    1: // ROR
+                    begin op1 <= size ? {op1[0], op1[15:1]} : {op1[0], op1[7:1]}; end
+
+                    2: // RCL
+                    begin op1 <= size ? {op1[14:0], flags[CF]} : {op1[6:0], flags[CF]}; flags[CF] <= op1[wb]; end
+
+                    3: // RCR
+                    begin op1 <= size ? {flags[CF], op1[15:1]} : {flags[CF], op1[7:1]}; flags[CF] <= op1[0]; end
+
+                    4, 6: // SHL
+                    begin flags[CF] <= op1[wb - op2 + 1]; op1 <= op1 << op2; op2 <= 0; end
+
+                    5: // SHR
+                    begin flags[CF] <= op1[op2 - 1];      op1 <= op1 >> op2; op2 <= 0; end
+
+                    7: // SAR
+                    begin op1 <= size ? {op1[15],op1[15:1]} : {op1[7],op1[7:1]}; flags[CF] <= op1[0]; end
+
+                endcase
+
+            end
+
+            // Расчет флагов
+            else begin
+
+                fn2 <= 0;
+                phi <= MODRM_WB;
+                wb  <= op1;
+
+                case (alu)
+
+                    0: begin flags[CF] <= op1[0];  flags[OF] <= op1[0]  ^ op1[wb];   end
+                    1: begin flags[CF] <= op1[wb]; flags[OF] <= op1[wb] ^ op1[wb-1]; end
+                    2: begin flags[OF] <= flags[CF] ^ op1[wb]; end
+                    3: begin flags[OF] <= op1[wb] ^ op1[wb-1]; end
+                    default: begin
+
+                        flags[ZF] <= !op1;
+                        flags[SF] <= op1[wb];
+                        flags[PF] <= ~^op1[7:0];
+                        flags[AF] <= 1'b1;
+
+                    end
+
+                endcase
+
+            end
+        end
+
+    endcase
+
+    // Процедура деления [diva, divb, divcnt]
+    DIVIDE: begin
+
+        if (divcnt) begin
+
+            divrem <= _divr >= divb ? _divr - divb : _divr; // Следующий остаток
+            divres <= {divres[30:0], _divr >= divb};        // Вдвиг нового бита результата
+            diva   <= {diva[30:0], 1'b0};                   // Сдвиг влево делимого
+            divcnt <= divcnt - 1'b1;                        // Уменьшение счетчика
+
+        end
+        else phi <= phi_next;
+
+    end
+
+    // Вызов прерывания wb
+    INTERRUPT: case (fn)
+
+        // Запись в стек flags|cs|ip
+        0: begin
+
+            fn        <= 1;
+            phi       <= PUSH;
+            phi_next  <= INTERRUPT;
+            wb        <= flags;
+            flags[IF] <= 1'b0;
+            flags[TF] <= 1'b0;
+            op1       <= wb;
+
+        end
+        1: begin fn <= 2; phi <= PUSH; wb <= cs; end
+        2: begin fn <= 3; phi <= PUSH; wb <= ip; end
+        // Загрузка данных из IDTR
+        3: begin fn <= 4; ea <= {op1[7:0], 2'b00}; bus <= 1'b1; seg <= 1'b0; end
+        4: begin fn <= 5; ip[ 7:0] <= in; ea <= ea + 1; end
+        5: begin fn <= 6; ip[15:8] <= in; ea <= ea + 1; end
+        6: begin fn <= 7; wb[ 7:0] <= in; ea <= ea + 1; end
+        7: begin
+
+            cs  <= {in, wb[7:0]};
+            phi <= PREPARE;
+            bus <= 1'b0;
+
+        end
+
+    endcase
+
 endcase
+
+// ~=~=~= ДЕЛЕНИЕ И УМНОЖЕНИЕ =~=~=~
+
+reg [ 4:0]  divcnt  = 1'b0;
+reg [31:0]  diva    = 1'b0;
+reg [31:0]  divb    = 1'b0;
+reg [31:0]  divrem  = 1'b0;
+reg [31:0]  divres  = 1'b0;
+reg         signa   = 1'b0;
+reg         signb   = 1'b0;
+wire [31:0] _divr   = {divrem, diva[31]};
+
+wire        signd   = signa ^ signb;
+wire [31:0] mult    = op1 * op2;
+wire [15:0] aam     = ax[15:8]*in + ax[7:0];
 
 // ~=~=~= ЦЕНТРАЛЬНОЕ АРИФМЕТИКО-ЛОГИЧЕСКОЕ УСТРОЙСТВО =~=~=~
 

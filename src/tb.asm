@@ -1,6 +1,7 @@
 
         org     0
-        xchg    [bx], bl
+        int3
+        pop     word [bx]
         mov     cx, [cs:D1]
         mov     cx, dx
         mov     ax, $FFFF

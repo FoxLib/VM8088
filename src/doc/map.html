@@ -14,6 +14,7 @@
         td.mrm  { background: #538430; color: #fff; }
         td.pfx  { background: #6898a6; color: #fff; }
         td.inv  { background: #636363; color: #fff; }
+        td.wok  { background: #ffff00; color: #000; }
         td.ok   { background: #d5e8c6; color: #000; }
         h2      { margin: 0; padding: 8px 0;font-size: 22px; font-family: Arial; }
     </style>
@@ -196,9 +197,9 @@
         <!--8A--><td class="mrm"><b>MOV</b>r8,rm</td>
         <!--8B--><td class="mrm"><b>MOV</b>r16,rm</td>
         <!--8C--><td class=""><b>MOV</b>r16,sreg</td>
-        <!--8D--><td class=""><b>LEA</b>r16,rm</td>
+        <!--8D--><td class="mrm"><b>LEA</b>r16,rm</td>
         <!--8E--><td class=""><b>MOV</b>sreg,r16</td>
-        <!--8F--><td class=""><b>POP</b>rm16</td>
+        <!--8F--><td class="mrm"><b>POP</b>rm16</td>
     </tr>
     <tr>
         <th>90</th>
@@ -259,8 +260,8 @@
     </tr>
     <tr>
         <th>C0</th>
-        <!--C0--><td class=""><b>*SFT*</b>rm8,i8</td>
-        <!--C1--><td class=""><b>*SFT*</b>rm16,i8</td>
+        <!--C0--><td class="mrm"><b>*SFT*</b>rm8,i8</td>
+        <!--C1--><td class="mrm"><b>*SFT*</b>rm16,i8</td>
         <!--C2--><td class=""><b>RET</b>i16</td>
         <!--C3--><td class=""><b>RET</b></td>
         <!--C4--><td class=""><b>LES</b>r16,[ea]</td>
@@ -271,17 +272,17 @@
         <!--C9--><td class="inv"><b>LEAVE</b></td>
         <!--CA--><td class=""><b>RETF</b>i16</td>
         <!--CB--><td class=""><b>RETF</b></td>
-        <!--CC--><td class=""><b>INT</b>3</td>
+        <!--CC--><td class="ok"><b>INT</b>3</td>
         <!--CD--><td class=""><b>INT</b>i8</td>
         <!--CE--><td class=""><b>INTO</b></td>
         <!--CF--><td class=""><b>IRET</b></td>
     </tr>
     <tr>
         <th>D0</th>
-        <!--D0--><td class=""><b>*SFT*</b>rm8,1</td>
-        <!--D1--><td class=""><b>*SFT*</b>rm16,1</td>
-        <!--D2--><td class=""><b>*SFT*</b>rm8,cl</td>
-        <!--D3--><td class=""><b>*SFT*</b>rm16,cl</td>
+        <!--D0--><td class="mrm"><b>*SFT*</b>rm8,1</td>
+        <!--D1--><td class="mrm"><b>*SFT*</b>rm16,1</td>
+        <!--D2--><td class="mrm"><b>*SFT*</b>rm8,cl</td>
+        <!--D3--><td class="mrm"><b>*SFT*</b>rm16,cl</td>
         <!--D4--><td class=""><b>AAM</b>i8</td>
         <!--D5--><td class=""><b>AAD</b>i8</td>
         <!--D6--><td class="ok"><b>SALC</b></td>
@@ -317,7 +318,7 @@
     <tr>
         <th>F0</th>
         <!--F0--><td class="pfx"><b>LOCK:</b></td>
-        <!--F1--><td class=""><b>INT</b>1</td>
+        <!--F1--><td class="ok"><b>INT</b>1</td>
         <!--F2--><td class="pfx"><b>REPNZ:</b></td>
         <!--F3--><td class="pfx"><b>REPZ:</b></td>
         <!--F4--><td class="ok"><b>HLT</b></td>

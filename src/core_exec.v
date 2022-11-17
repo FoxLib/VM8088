@@ -173,7 +173,17 @@ endcase
 endcase
 
 // 88-8B MOV mrm
-8'b1000_10xx: begin phi <= MODRM_WB; wb <= op2; end
+// 8D LEA
+8'b1000_10xx,
+8'b1000_1101: begin phi <= MODRM_WB; wb <= opcode[2] ? ea : op2; end
+
+// 8F POP rm
+8'b1000_1111: case (fn)
+
+    0: begin fn  <= 1; phi <= MODRM; dir <= 1'b0; ignoreo <= 1'b1; end
+    1: begin phi <= MODRM_WB; phi_next <= PREPARE; end
+
+endcase
 
 // 90-97 XCHG a, r
 8'b1001_0xxx: begin
@@ -274,6 +284,14 @@ endcase
 
 endcase
 
+// C0,C1 SHIFT imm8
+8'b1100_000x: case (fn)
+
+    0: begin bus <= 1'b0; fn  <= 1; end
+    1: begin bus <= 1'b1; op2 <= in[4:0]; alu <= modrm[5:3]; phi <= SHIFT; end
+
+endcase
+
 // C6,C7 MOV mrm, i
 8'b1100_011x: case (fn)
 
@@ -310,6 +328,9 @@ endcase
     end
 
 endcase
+
+// D0-D4 *SHIFT* rm, (1|cl)
+8'b1101_00xx: begin op2 <= opcode[1] ? cx[4:0] : 1; alu <= modrm[5:3]; phi <= SHIFT; end
 
 // 70-7F Jccc
 // E0-E3 LOOP(Z,NZ) JCXZ
