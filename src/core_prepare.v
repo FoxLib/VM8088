@@ -17,6 +17,9 @@
 8'b1100_011x,
 8'b1000_1101: begin phi <= MODRM; dir <= in[3]; ignoreo <= 1'b1; end
 
+// MOV sreg, rm; rm, sreg
+8'b1000_11x0: begin phi <= MODRM; size <= 1'b1; ignoreo <= ~in[1]; end
+
 // CLC, STC; CLI, STI; CLD, STD; CMC
 8'b1111_100x: begin phi <= PREPARE; flags[CF] <= in[0]; end
 8'b1111_101x: begin phi <= PREPARE; flags[IF] <= in[0]; end

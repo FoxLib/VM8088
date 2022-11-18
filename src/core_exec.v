@@ -177,6 +177,32 @@ endcase
 8'b1000_10xx,
 8'b1000_1101: begin phi <= MODRM_WB; wb <= opcode[2] ? ea : op2; end
 
+// 8C MOV rm, sreg
+8'b1000_1100: begin
+
+    phi <= MODRM_WB;
+    bus <= 1'b1;
+
+    case (modrm[5:3])
+    2'h0: wb <= es; 2'h1: wb <= cs;
+    2'h2: wb <= ss; 2'h3: wb <= ds;
+    endcase
+
+end
+
+// 8E MOV rm, sreg
+8'b1000_1110: begin
+
+    phi <= PREPARE;
+    bus <= 1'b0;
+
+    case (modrm[5:3])
+    2'h0: es <= op2; 2'h1: cs <= op2;
+    2'h2: ss <= op2; 2'h3: ds <= op2;
+    endcase
+
+end
+
 // 8F POP rm
 8'b1000_1111: case (fn)
 

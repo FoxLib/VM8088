@@ -1,11 +1,11 @@
 // synopsys translate_off
 `timescale 1 ps / 1 ps
 // synopsys translate_on
-module m16k (clock, address_a, address_b, data_a, data_b, wren_a, wren_b, q_a, q_b);
+module m32k (clock, address_a, address_b, data_a, data_b, wren_a, wren_b, q_a, q_b);
 
 input    clock;
-input    [13:0] address_a;
-input    [13:0] address_b;
+input    [14:0] address_a;
+input    [14:0] address_b;
 input    [ 7:0] data_a;
 input    [ 7:0] data_b;
 output   [ 7:0] q_a;
@@ -47,8 +47,8 @@ defparam
     altsyncram_component.init_file                = "m32k.mif",
     altsyncram_component.intended_device_family   = "Cyclone III",
     altsyncram_component.lpm_type                 = "altsyncram",
-    altsyncram_component.numwords_a               = 16384,
-    altsyncram_component.numwords_b               = 16384,
+    altsyncram_component.numwords_a               = 32768,
+    altsyncram_component.numwords_b               = 32768,
     altsyncram_component.operation_mode           = "BIDIR_DUAL_PORT",
     altsyncram_component.outdata_aclr_a           = "NONE",
     altsyncram_component.outdata_aclr_b           = "NONE",
@@ -59,8 +59,8 @@ defparam
     altsyncram_component.read_during_write_mode_mixed_ports = "DONT_CARE",
     altsyncram_component.read_during_write_mode_port_a = "NEW_DATA_WITH_NBE_READ",
     altsyncram_component.read_during_write_mode_port_b = "NEW_DATA_WITH_NBE_READ",
-    altsyncram_component.widthad_a                = 14,
-    altsyncram_component.widthad_b                = 14,
+    altsyncram_component.widthad_a                = 15,
+    altsyncram_component.widthad_b                = 15,
     altsyncram_component.width_a                  = 8,
     altsyncram_component.width_b                  = 8,
     altsyncram_component.width_byteena_a          = 1,

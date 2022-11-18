@@ -68,10 +68,8 @@ core U2
 // ВИДЕОКАРТА
 // ---------------------------------------------------------------------
 
-wire [13:0] vcard_address;
-wire [12:0] vtext_address;
-wire [ 7:0] vcard_data;
-wire [ 7:0] vtext_data;
+wire [13:0] vcard_address; wire [ 7:0] vcard_data;
+wire [12:0] vtext_address; wire [ 7:0] vtext_data;
 
 vcard U1
 (
@@ -81,37 +79,24 @@ vcard U1
     .b              (vga_b[4:1]),
     .hs             (vga_hs),
     .vs             (vga_vs),
-    .cga            (1'b1),
-    .cga_address    (vcard_address),
+    .cga            (1'b0),
     .txt_address    (vtext_address),
-    .cga_data       (vcard_data),
     .txt_data       (vtext_data),
 );
 
-// БЛОКИ ПАМЯТИ
+// БЛОКИ ПАМЯТИ 32(RAM)+ 8(VCARD) + 4(BIOS) = 44K
 // ---------------------------------------------------------------------
 
-m16k M1
+m32k M1
 (
     .clock      (clock_100),
-    .address_a  (address[13:0]),
-    .q_a        (m16k_in),
+    .address_a  (address[14:0]),
+    .q_a        (m32k_in),
     .data_a     (out),
-    .wren_a     (m16k_we)
+    .wren_a     (m32k_we)
 );
 
-mcga M2
-(
-    .clock      (clock_100),
-    .address_a  (address[13:0]),
-    .q_a        (mcga_in),
-    .data_a     (out),
-    .wren_a     (mcga_we),
-    .address_b  (vcard_address),
-    .q_b        (vcard_data)
-);
-
-m8k M3
+m8k M2
 (
     .clock      (clock_100),
     .address_a  (address[12:0]),
@@ -122,24 +107,33 @@ m8k M3
     .q_b        (vtext_data)
 );
 
+m4k M3
+(
+    .clock      (clock_100),
+    .address_a  (address[11:0]),
+    .q_a        (m4k_in),
+    .data_a     (out),
+    .wren_a     (m4k_we)
+);
+
 // РОУТЕР ПАМЯТИ
 // ---------------------------------------------------------------------
 
-wire [7:0] m16k_in; reg m16k_we;
-wire [7:0] mcga_in; reg mcga_we;
+wire [7:0] m32k_in; reg m16k_we;
 wire [7:0] m8k_in;  reg m8k_we;
+wire [7:0] m4k_in;  reg m4k_we;
 
 always @(*) begin
 
-    m16k_we = 1'b0;
-    mcga_we = 1'b0;
+    m32k_we = 1'b0;
+    m8k_we  = 1'b0;
     m8k_we  = 1'b0;
 
     casex (address)
 
-        20'b0000_00xxxxxx_xxxxxxxx: begin in = m16k_in; m16k_we = we; end // 00000 DATA 16K
-        20'b1011_10xxxxxx_xxxxxxxx: begin in = mcga_in; mcga_we = we; end // B8000 CGA  16k
-        20'b1111_111xxxxx_xxxxxxxx: begin in = m8k_in;  m8k_we  = we; end // FE000 BIOS 8k
+        20'b0000_0xxxxxxx_xxxxxxxx: begin in = m32k_in; m32k_we = we; end // 00000 DATA 32K
+        20'b1011_10xxxxxx_xxxxxxxx: begin in = m8k_in;  m8k_we  = we; end // B8000 TEXT 8k
+        20'b1111_1111xxxx_xxxxxxxx: begin in = m4k_in;  m4k_we  = we; end // FF000 BIOS 4k
         default: in = 8'hFF;
 
     endcase

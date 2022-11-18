@@ -1,6 +1,6 @@
 
         org     0
-        int3
+        mov     es, [D1]
         pop     word [bx]
         mov     cx, [cs:D1]
         mov     cx, dx
