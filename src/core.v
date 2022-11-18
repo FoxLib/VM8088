@@ -1,6 +1,7 @@
 /* verilator lint_off WIDTH */
 /* verilator lint_off CASEX */
 /* verilator lint_off CASEINCOMPLETE */
+/* verilator lint_off CASEOVERLAP */
 
 module core
 (
@@ -138,8 +139,8 @@ always @(posedge clock)
 // Сброс процессора
 if (reset_n == 1'b0) begin
 
-    ip      <= 16'hFFF0;
-    cs      <= 16'hF000;
+    ip      <= 16'h0000; // FFF0
+    cs      <= 16'hFF00; // F000
     phi     <= 1'b0;
     o_seg_  <= 1'b0;
     o_rep_  <= 2'h0;

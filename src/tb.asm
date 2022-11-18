@@ -1,13 +1,11 @@
 
+;       СТАРТ $FF00:$0000
+
         org     0
-        mov     es, [D1]
-        pop     word [bx]
-        mov     cx, [cs:D1]
-        mov     cx, dx
-        mov     ax, $FFFF
-        xchg    ax, cx
-        dec     bx
-        mov     bx, D1
-        cmp     ax, $AFFE
+
+        mov     ax, [cs:D1]
+        mov     ds, ax
+        mov     ax, $2741
+        mov     [$0000], ax
         jmp     short $
-D1:     dw      $FFFA
+D1:     dw      $B800

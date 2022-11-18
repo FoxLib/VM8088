@@ -7,13 +7,18 @@ int main(int argc, char* argv[]) {
 
     App* app = new App();
 
-    int tstate = 100000;
+    app->loadarg(argc, argv);
+
+    int fstate = 0; // FIXED cycles
+    int tstate = fstate ? fstate : 100000;
+
     while (app->main()) {
 
         Uint32 ticks = SDL_GetTicks();
         for (int i = 0; i < tstate; i++) app->tick();
         ticks = SDL_GetTicks() - ticks;
-        tstate = tstate ? (20 * tstate / ticks) : 50000;
+
+        tstate = fstate ? fstate : (tstate ? (20 * tstate / ticks) : 50000);
     }
 
     return app->destroy();

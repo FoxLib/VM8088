@@ -47,6 +47,12 @@ public:
             memory[0xB8001 + i] = 0x17;
         }
 
+        // Сброс процессора
+        core->reset_n = 0;
+        core->clock   = 0; core->eval();
+        core->clock   = 1; core->eval();
+        core->reset_n = 1;
+        core->locked  = 1;
     }
 
     // Один тик
@@ -61,10 +67,31 @@ public:
 
         core->clock  = 0; core->eval();
         core->clock  = 1; core->eval();
+
         vcard->clock = 0; vcard->eval();
         vcard->clock = 1; vcard->eval();
 
+        // DEBUGOID
+        // printf("%05x = %02x, %x | %x\n", core->address, core->in,  core->out, core->we);
+
         dsub(vcard->hs, vcard->vs, 65536*(vcard->r*16) + 256*(vcard->g*16) + vcard->b*16);
+    }
+
+    void loadarg(int argc, char** argv) {
+
+        FILE* fp = fopen("tb.bin", "rb");
+
+        // Разбор параметров
+        for (int i = 1; i < argc; i++) {
+            // ..
+        }
+
+        // Загрузка BIOS, если он есть
+        if (fp) {
+
+            fread(memory + 0xFF000, 1, 4096, fp);
+            fclose(fp);
+        }
     }
 
     // Рендеринг области VGA рисования
