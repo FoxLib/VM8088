@@ -69,6 +69,12 @@ void circle(int xc, int yc, int radius, int color) {
     }
 }
 
+void pal1() {
+
+    for (int i = 1; i < 255; i++)
+        palette(i, i, i, 255);
+}
+
 void test1() {
 
     int n = 0;
@@ -92,15 +98,14 @@ void test2() {
     }
 }
 
-
 int main() {
 
     cli;
 
     screen13;
+
+    pal1();
     test2();
-
-
 
     for(;;);
 }
