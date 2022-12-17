@@ -1,0 +1,30 @@
+
+<!-- saved from url=(0043)https://stanislavs.org/helppc/int_10-d.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>int 10,d</title>
+</head>
+
+<body><pre></pre>
+
+<h2 align="Center">INT 10,D - Read Graphics Pixel at Coordinate</h2>
+
+<pre>
+
+	AH = 0D
+	BH = page number, see <a href="https://stanislavs.org/helppc/video_pages.html">VIDEO PAGES</a>
+	CX = column number (zero based)
+	DX = row number (zero based)
+
+
+	on return:
+	AL = color of pixel read
+
+
+	- 64K IBM EGAs with BIOS dated 9/13/84 in 350 line video
+	  modes,  return invalid data in AL
+	- page number in BH ignored for 320x200 4 color graphics mode
+
+</pre>
+
+
+</body></html>

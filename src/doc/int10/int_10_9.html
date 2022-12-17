@@ -1,0 +1,30 @@
+
+<!-- saved from url=(0043)https://stanislavs.org/helppc/int_10-9.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>int 10,9</title>
+</head>
+
+<body><pre></pre>
+
+<h2 align="Center">INT 10,9 - Write Character and Attribute at Cursor Position</h2>
+
+<pre>
+
+	AH = 09
+	AL = ASCII character to write
+	BH = display page  (or mode 13h, background pixel value)
+	BL = character attribute (text) foreground color (graphics)
+	CX = count of characters to write (CX &gt;= 1)
+
+
+	returns nothing
+
+
+	- does not move the cursor
+	- in graphics mode (except mode 13h), if BL bit 7=1 then
+	  value of BL is XOR'ed with the background color
+
+</pre>
+
+
+</body></html>

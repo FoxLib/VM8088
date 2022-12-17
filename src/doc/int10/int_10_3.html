@@ -1,0 +1,33 @@
+
+<!-- saved from url=(0043)https://stanislavs.org/helppc/int_10-3.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>int 10,3</title>
+</head>
+
+<body><pre></pre>
+
+<h2 align="Center">INT 10,3 - Read Cursor Position and Size</h2>
+
+<pre>
+
+	AH = 03
+	BH = video page
+
+
+	on return:
+	CH = cursor starting scan line (low order 5 bits)
+	CL = cursor ending scan line (low order 5 bits)
+	DH = row
+	DL = column
+
+
+	- returns data from <a href="https://stanislavs.org/helppc/bios_data_area.html">BIOS DATA AREA</a> locations 40:50, 40:60 and 40:61
+	- the <a href="https://stanislavs.org/helppc/6845.html">6845</a> can also be used to read the cursor position
+	- the return data can be circumvented by direct port I/O to the 6845
+	  CRT Controller since this function returns the data found in the
+	  BIOS Data Area without actually checking the controller
+	
+</pre>
+
+
+</body></html>

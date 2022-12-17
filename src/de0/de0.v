@@ -76,121 +76,298 @@ assign HEX4 = 7'b1111111;
 assign HEX5 = 7'b1111111;
 
 // Генерация частот
-// -----------------------------------------------------------------------------
-
 wire locked;
 wire clock_25;
 wire clock_100;
 
 de0pll unit_pll
 (
-    .clkin      (CLOCK_50),
-    .m25        (clock_25),
-    .m100       (clock_100),
-    .locked     (locked)
+    .clkin     (CLOCK_50),
+    .m25       (clock_25),
+    .m100      (clock_100),
+    .locked    (locked)
 );
 
-
-// ПРОЦЕССОР
+// ---------------------------------------------------------------------
+// Маршрутизация памяти
+// 256K Базовая
+// 32K  BIOS
+// 8K   TextMode
+// 1K   DAC
 // ---------------------------------------------------------------------
 
-wire [19:0] address;
+wire [31:0] address;
+reg  [17:0] mm_address;
 reg  [ 7:0] in;
 wire [ 7:0] out;
 wire        we;
+reg         we_vga;
+reg         we_membase;
+reg         we_bios;
+reg   [7:0] in_membase;
+reg   [7:0] in_vga;
+reg   [7:0] in_bios;
 
-core U2
-(
-    .clock      (clock_25),
-    .reset_n    (1'b1),
-    .locked     (locked),
-    .address    (address),
-    .in         (in),
-    .out        (out),
-    .we         (we)
-);
+always @* begin
 
-// ВИДЕОКАРТА
-// ---------------------------------------------------------------------
-
-wire [13:0] vcard_address;
-wire [ 7:0] vcard_data;
-
-vcard U1
-(
-    .clock          (clock_25),
-    .r              (VGA_R),
-    .g              (VGA_G),
-    .b              (VGA_B),
-    .hs             (VGA_HS),
-    .vs             (VGA_VS),
-    .cga            (1'b0),
-    .cga_address    (vcard_address),
-    .cga_data       (vcard_data),
-    .txt_address    (txt_address),
-    .txt_in         (txt_in)
-);
-
-// МОДУЛИ ПАМЯТИ
-// ---------------------------------------------------------------------
-
-// Общая память
-m256k M0
-(
-    .clock      (clock_100),
-    .a0         (address[17:0]),
-    .q0         (m256k_in),
-    .d0         (out),
-    .w0         (m256k_we),
-);
-
-// CGA модуль
-m16k M1
-(
-    .clock      (clock_100),
-    .a0         (address[13:0]),
-    .q0         (m16k_in),
-    .d0         (out),
-    .w0         (m16k_we),
-    .a1         (vcard_address),
-    .q1         (vcard_data)
-);
-
-// BIOS
-m8k M2
-(
-    .clock      (clock_100),
-    .a0         (address[12:0]),
-    .q0         (m8k_in),
-    .d0         (out),
-    .w0         (m8k_we),
-);
-
-// РОУТЕР ПАМЯТИ
-// ---------------------------------------------------------------------
-
-wire [7:0] m8k_in;   reg m8k_we;
-wire [7:0] m16k_in;  reg m16k_we;
-wire [7:0] m256k_in; reg m256k_we;
-
-always @(*) begin
-
-    m16k_we  = 1'b0;
-    m256k_we = 1'b0;
-    m8k_we   = 1'b0;
+    we_membase  = 1'b0;
+    we_vga      = 1'b0;
+    we_bios     = 1'b0;
+    in          = 8'hFF;
+    mm_address  = address;
 
     casex (address)
 
-        20'b00xx_xxxxxxxx_xxxxxxxx: begin in = m256k_in; m256k_we = we; end // 00000 256K
-        20'b1010_00xxxxxx_xxxxxxxx: begin in = m16k_in;  m16k_we  = we; end // A0000 16K
-        20'b1111_111xxxxx_xxxxxxxx: begin in = m8k_in;   m8k_we   = we; end // FE000 8K
-        default: in = 8'hFF;
+        // 0..256K
+        20'b00xx_xxxxxxxx_xxxxxxxx: begin we_membase = we; in = in_membase; end
+
+        // VGA B8000-B9FFF 8K
+        20'b1011_100xxxxx_xxxxxxxx: begin we_vga = we; in = in_vga; end
+
+        // VGA A0000-AFFFF 64K
+        20'b1010_xxxxxxxx_xxxxxxxx: case (videomode)
+
+            2: begin
+
+                in         = in_membase;
+                we_membase = we;
+                mm_address = {2'b11, address[15:0]};
+
+            end
+
+        endcase
+
+        // BIOS F8000-FFFFF 32K
+        20'b1111_1xxxxxxx_xxxxxxxx: begin we_bios = we; in = in_bios; end
 
     endcase
 
 end
 
+// 256k
+membase membase_inst
+(
+    .clock      (clock_100),
+    .address_a  (mm_address),
+    .q_a        (in_membase),
+    .data_a     (out),
+    .wren_a     (we_membase),
+    .address_b  (gfx_address),
+    .q_b        (gfx_data)
+);
+
+// 32k
+bios bios_inst
+(
+    .clock      (clock_100),
+    .address_a  (address[14:0]),
+    .q_a        (in_bios),
+    .data_a     (out),
+    .wren_a     (we_bios),
+);
+
+// 8k: Видеопамять и знакогенератор
+font font_inst
+(
+    .clock      (clock_100),
+
+    // Видеоадаптер
+    .address_a  (vga_address),
+    .q_a        (vga_data),
+
+    // Процессор
+    .address_b  (address[12:0]),
+    .q_b        (in_vga),
+    .data_b     (out),
+    .wren_b     (we_vga),
+);
+
+// 1kb
+dac dac_inst
+(
+    .clock      (clock_100),
+    .address_a  (vga_dac_address),
+    .q_a        (vga_dac_data),
+    .address_b  (dac_address),
+    .data_b     (dac_out),
+    .wren_b     (dac_we),
+);
+
+// ---------------------------------------------------------------------
+// Процессор 32х битный
+// ---------------------------------------------------------------------
+
+core cpu_inst
+(
+    // Тактовый генератор
+    .clock          (clock_25),
+    .reset_n        (locked & RESET_N),
+    .locked         (1'b1),
+    // Магистраль данных 8 битная
+    .address        (address),
+    .in             (in),
+    .out            (out),
+    .we             (we),
+
+    // Порты
+    .port_clk       (port_clk),
+    .port           (port),
+    .port_i         (port_i),
+    .port_o         (port_o),
+    .port_w         (port_w),
+
+    // Прерывания
+    .intr           (intr),
+    .irq            (irq),
+    .intl           (intl)
+);
+
+// ---------------------------------------------------------------------
+// Управление портами
+// ---------------------------------------------------------------------
+
+wire        port_clk;
+wire [15:0] port;
+wire [ 7:0] port_i;
+wire [ 7:0] port_o;
+wire        port_w;
+wire        intr;
+wire        intl;
+wire [ 7:0] irq;
+
+pctl pctl_inst
+(
+    .reset_n        (locked & RESET_N),
+    .clock          (clock_25),
+
+    // Интерфейс
+    .port_clk       (port_clk),
+    .port           (port),
+    .port_i         (port_i),
+    .port_o         (port_o),
+    .port_w         (port_w),
+
+    // Видео
+    .videomode      (videomode),
+    .cursor         (cursor),
+    .cursor_l       (cursor_l),
+    .cursor_h       (cursor_h),
+    .dac_out        (dac_out),
+    .dac_address    (dac_address),
+    .dac_we         (dac_we),
+
+    // Клавиатура
+    .ps2_data       (ps2_data),
+    .ps2_hit        (ps2_hit),
+
+    // SD-карта
+    .sd_signal      (sd_signal),   // In   =1 Сообщение отослано на spi
+    .sd_cmd         (sd_cmd),      // In      Команда
+    .sd_din         (sd_din),      // Out     Принятое сообщение от карты
+    .sd_out         (sd_out),      // In      Сообщение на отправку к карте
+    .sd_busy        (sd_busy),     // Out  =1 Занято
+    .sd_timeout     (sd_timeout),  // Out  =1 Таймаут
+
+    // Прерывания
+    .intr           (intr),
+    .irq            (irq),
+    .intl           (intl)
+);
+
+// ---------------------------------------------------------------------
+// Модуль VGA
+// ---------------------------------------------------------------------
+
+wire [12:0] vga_address;
+wire [ 7:0] vga_data;
+wire [ 1:0] videomode;
+wire [10:0] cursor;
+wire [ 3:0] cursor_l;
+wire [ 3:0] cursor_h;
+
+wire [31:0] dac_out;
+wire        dac_we;
+wire [ 7:0] dac_address;
+wire [17:0] gfx_address;
+wire [ 7:0] gfx_data;
+wire [ 7:0] vga_dac_address;
+wire [31:0] vga_dac_data;
+
+vga vga_inst
+(
+    .clock      (clock_25),
+    .r          (VGA_R),
+    .g          (VGA_G),
+    .b          (VGA_B),
+    .hs         (VGA_HS),
+    .vs         (VGA_VS),
+    .address    (vga_address),
+    .data       (vga_data),
+    .cursor     (cursor),
+    .cursor_sl  (cursor_l),
+    .cursor_sh  (cursor_h),
+    .videomode  (videomode),
+
+    // Видео
+    .vga_address     (gfx_address),
+    .vga_data        (gfx_data),
+    .vga_dac_address (vga_dac_address),
+    .vga_dac_data    (vga_dac_data),
+);
+
+// ---------------------------------------------------------------------
+// Модуль SD
+// ---------------------------------------------------------------------
+
+assign SD_DATA[0] = 1'bZ;
+
+wire [1:0]  sd_cmd;
+wire [7:0]  sd_din;
+wire [7:0]  sd_out;
+wire        sd_signal;
+wire        sd_busy;
+wire        sd_timeout;
+
+sd UnitSD
+(
+    // 25 Mhz
+    .clock      (clock_25),
+
+    // Физический интерфейс
+    .SPI_CS     (SD_DATA[3]),   // Выбор чипа
+    .SPI_SCLK   (SD_CLK),       // Тактовая частота
+    .SPI_MISO   (SD_DATA[0]),   // Входящие данные
+    .SPI_MOSI   (SD_CMD),       // Исходящие
+
+    // Интерфейс
+    .sd_signal  (sd_signal),   // In   =1 Сообщение отослано на spi
+    .sd_cmd     (sd_cmd),      // In      Команда
+    .sd_din     (sd_din),      // Out     Принятое сообщение от карты
+    .sd_out     (sd_out),      // In      Сообщение на отправку к карте
+    .sd_busy    (sd_busy),     // Out  =1 Занято
+    .sd_timeout (sd_timeout)   // Out  =1 Таймаут
+);
+
+// ---------------------------------------------------------------------
+// Клавиатура
+// ---------------------------------------------------------------------
+
+wire [7:0]  ps2_data;
+wire        ps2_hit;
+
+ps2 ps2_inst
+(
+    .clock      (clock_25),
+    .ps_clock   (PS2_CLK),
+    .ps_data    (PS2_DAT),
+    .done       (ps2_hit),
+    .data       (ps2_data)
+);
+
 endmodule
 
-`include "../vcard.v"
 `include "../core.v"
+`include "../vga.v"
+`include "../pctl.v"
+`include "../ps2.v"
+`include "../sd.v"

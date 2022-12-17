@@ -1,0 +1,33 @@
+
+<!-- saved from url=(0043)https://stanislavs.org/helppc/int_10-5.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>int 10,5</title>
+</head>
+
+<body><pre></pre>
+
+<h2 align="Center">INT 10,5 - Select Active Display Page</h2>
+
+<pre>
+	AH = 05
+	AL = new page number, see <a href="https://stanislavs.org/helppc/video_pages.html">VIDEO PAGES</a>
+
+	for PCjr only:
+	AL = 80h to read CRT/CPU page registers
+	     81h to set CPU page register
+		 BL = CPU page register
+	     82h to set CRT page register
+		 BH = CRT page register
+	     83h to set CPU and page registers
+		 BH = CRT page register
+		 BL = CPU page register
+
+
+	on return: (PCjr only)
+	BH = CRT page register
+	BL = CPU page register
+
+</pre>
+
+
+</body></html>

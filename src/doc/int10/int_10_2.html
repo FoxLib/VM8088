@@ -1,0 +1,32 @@
+
+<!-- saved from url=(0043)https://stanislavs.org/helppc/int_10-2.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>int 10,2</title>
+</head>
+
+<body><pre></pre>
+
+<h2 align="Center">INT 10,2 - Set Cursor Position</h2>
+
+<pre>
+
+	AH = 02
+	BH = page number (0 for graphics modes)
+	DH = row
+	DL = column
+
+
+	returns nothing
+
+
+	- positions relative to 0,0 origin
+	- 80x25 uses coordinates 0,0 to 24,79;	40x25 uses 0,0 to 24,39
+	- the <a href="https://stanislavs.org/helppc/6845.html">6845</a> can also be used to perform this function
+	- setting the data in the BIOS Data Area at location 40:50 does not
+	  take immediate effect and is not recommended
+	- see	<a href="https://stanislavs.org/helppc/video_pages.html">VIDEO PAGES</a>   <a href="https://stanislavs.org/helppc/6845.html">6845</a>   <a href="https://stanislavs.org/helppc/bios_data_area.html">BDA</a>
+
+</pre>
+
+
+</body></html>

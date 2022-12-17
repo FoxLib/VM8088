@@ -1,0 +1,28 @@
+
+<!-- saved from url=(0043)https://stanislavs.org/helppc/int_10-8.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>int 10,8</title>
+</head>
+
+<body><pre></pre>
+
+<h2 align="Center">INT 10,8 - Read Character and Attribute at Cursor Position</h2>
+
+<pre>
+
+	AH = 08
+	BH = display page
+
+
+	on return:
+	AH = attribute of character (alpha modes only)
+	AL = character at cursor position
+
+
+	- in video mode 4 (300x200 4 color) on the EGA, MCGA and VGA
+	  this function works only on page zero
+
+</pre>
+
+
+</body></html>

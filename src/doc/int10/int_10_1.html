@@ -1,0 +1,46 @@
+
+<!-- saved from url=(0043)https://stanislavs.org/helppc/int_10-1.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>int 10,1</title>
+</head>
+
+<body><pre></pre>
+
+<h2 align="Center">INT 10,1 - Set Cursor Type</h2>
+
+<pre>
+
+	AH = 01
+	CH = cursor starting scan line (cursor top) (low order 5 bits)
+	CL = cursor ending scan line (cursor bottom) (low order 5 bits)
+
+
+	returns nothing
+
+
+	- cursor scan lines are zero based
+	- cursor size can also be set via the <a href="https://stanislavs.org/helppc/6845.html">6845</a> CRT controller
+	- cursor size can be determined using the CRTC,  <a href="https://stanislavs.org/helppc/int_10-3.html">INT 10,3</a>  or the
+	  <a href="https://stanislavs.org/helppc/bios_data_area.html">BIOS Data Area</a> bytes 40:60 (ending scan line) and 40:61 (starting
+	  scan line)
+	- the following is a list of the cursor scan lines associated with
+	  most common adapters;  screen sizes over 40 lines may differ
+	  depending on adapters.
+
+<b>		Line	 Starting     Ending	  Character</b>
+<b>	Video	Count	 Scan Line    Scan Line   Point Size</b>
+
+	CGA	 25	    06		 07	      08
+	MDA	 25	    0B		 0C	      0E
+	EGA	 25	    06		 07	      0E
+	EGA	 43	  04/06 	 07	      08
+	VGA	 25	    0D		 0E	      10
+	VGA	 40	    08		 09	      0A
+	VGA	 50	    06		 07	      08
+
+	- use CX = 2000h to disable cursor
+
+</pre>
+
+
+</body></html>

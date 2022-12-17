@@ -1,0 +1,28 @@
+
+<!-- saved from url=(0043)https://stanislavs.org/helppc/int_10-a.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>int 10,a</title>
+</head>
+
+<body><pre></pre>
+
+<h2 align="Center">INT 10,A - Write Character Only at Current Cursor Position</h2>
+
+<pre>
+
+	AH = 0A
+	AL = ASCII character to write
+	BH = display page  (or mode 13h, background pixel value)
+	BL = foreground color (graphics mode only)
+	CX = count of characters to write (CX &gt;= 1)
+
+
+	return nothing
+
+
+	- similar to <a href="https://stanislavs.org/helppc/int_10-9.html">INT 10,9</a> except color ignored in text modes
+
+</pre>
+
+
+</body></html>

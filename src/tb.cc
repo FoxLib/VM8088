@@ -1,24 +1,31 @@
-#include "obj_dir/Vvcard.h"
+#include "obj_dir/Vvga.h"
 #include "obj_dir/Vcore.h"
-#include "font.h"
-#include "tb.h"
+#include "obj_dir/Vps2.h"
+#include "obj_dir/Vpctl.h"
+#include "obj_dir/Vsd.h"
+#include "app.cc"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char** argv) {
 
-    App* app = new App();
+    int   instr  = 125000;
+    float target = 100;
 
-    app->loadarg(argc, argv);
-
-    int fstate = 0; // FIXED cycles
-    int tstate = fstate ? fstate : 100000;
+    Verilated::commandArgs(argc, argv);
+    App* app = new App(argc, argv);
 
     while (app->main()) {
 
-        Uint32 ticks = SDL_GetTicks();
-        for (int i = 0; i < tstate; i++) app->tick();
-        ticks = SDL_GetTicks() - ticks;
+        Uint32 start = SDL_GetTicks();
 
-        tstate = fstate ? fstate : (tstate ? (20 * tstate / ticks) : 50000);
+        // Автоматическая коррекция кол-ва инструкции в секунду
+        for (int i = 0; i < instr; i++) app->tick();
+
+        // Коррекция тактов
+        Uint32 delay = (SDL_GetTicks() - start);
+        instr = (instr * (0.5 * target) / (float)delay);
+        instr = instr < 1000 ? 1000 : instr;
+
+        if (Verilated::gotFinish()) break;
     }
 
     return app->destroy();

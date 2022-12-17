@@ -1,0 +1,33 @@
+
+<!-- saved from url=(0043)https://stanislavs.org/helppc/int_10-6.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>int 10,6</title>
+</head>
+
+<body><pre></pre>
+
+<h2 align="Center">INT 10,6 - Scroll Window Up</h2>
+
+<pre>
+
+	AH = 06
+	AL = number of lines to scroll, previous lines are
+	     blanked, if 0 or AL &gt; screen size, window is blanked
+	BH = attribute to be used on blank line
+	CH = row of upper left corner of scroll window
+	CL = column of upper left corner of scroll window
+	DH = row of lower right corner of scroll window
+	DL = column of lower right corner of scroll window
+
+
+	returns nothing
+
+
+	- in video mode 4 (300x200 4 color) on the EGA, MCGA and VGA
+	  this function scrolls page 0 regardless of the current page
+	- can be used to scroll graphics screens, using character coords
+	- on CGA's this function disables video adapter, causing flitter
+</pre>
+
+
+</body></html>

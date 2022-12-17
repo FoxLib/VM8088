@@ -1,23 +1,52 @@
-LIB=/usr/share/verilator/include
+VRL=/usr/share/verilator/include
+DIR=core32
+RUN=tbc
+# icarus | tbc
 
-all: icarus app
-#all: icarus
-icarus:
-	fasm tb.asm tb.bin
-	php utils/bin2hex.php tb.bin tb.hex
-	iverilog -g2005-sv -DICARUS=1 -o tb.qqq tb.v core.v
+all: $(RUN)
+
+icarus: core.v
+	iverilog -g2005-sv -DICARUS=1 -I$(DIR) -o tb.qqq tb.v core.v
 	vvp tb.qqq >> /dev/null
 	rm tb.qqq
+
 wave:
 	gtkwave tb.gtkw
-app: ver
-	g++ -o tb -I$(LIB) $(LIB)/verilated.cpp tb.cc obj_dir/Vvcard__ALL.a obj_dir/Vcore__ALL.a -lSDL2
-	strip tb
+
+# Запуск с логированием в tb.log
+log:
+	./tb -d > tb.log
+
+# Логирование, но остановка на int3
+int3:
+	./tb -t > tb.log
+
+run:
 	./tb
-ver:
-	verilator -cc vcard.v
+
+tbc: core.v icarus verilate
+	g++ -o tb -I$(VRL) $(VRL)/verilated.cpp tb.cc \
+		obj_dir/Vvga__ALL.a \
+		obj_dir/Vcore__ALL.a \
+		obj_dir/Vps2__ALL.a \
+		obj_dir/Vpctl__ALL.a \
+		obj_dir/Vsd__ALL.a \
+	-lSDL2
+	./tb
+verilate:
+	verilator -cc vga.v
 	verilator -cc core.v
-	cd obj_dir && make -f Vvcard.mk
+	verilator -cc ps2.v
+	verilator -cc pctl.v
+	verilator -cc sd.v
+	cd obj_dir && make -f Vvga.mk
 	cd obj_dir && make -f Vcore.mk
+	cd obj_dir && make -f Vps2.mk
+	cd obj_dir && make -f Vpctl.mk
+	cd obj_dir && make -f Vsd.mk
+core.v: $(DIR)/core_top.v $(DIR)/core_decl.v $(DIR)/core_exec.v $(DIR)/core_proc.v $(DIR)/core_alu.v
+	cd $(DIR) && make
+video:
+	ffmpeg -framerate 70 -r 60 -i out/record.ppm -vf "scale=w=1280:h=800,pad=width=1920:height=1080:x=320:y=140:color=black" -sws_flags neighbor -sws_dither none -f mp4 -q:v 0 -vcodec mpeg4 -y record.mp4
 clean:
-	rm tb tb.vcd tb.hex tb.bin
+	rm -rf *.o tb tb.log obj_dir
