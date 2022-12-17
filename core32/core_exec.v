@@ -32,6 +32,17 @@ exec: casex (opcode)
 
     end
 
+    // MOV[ZS]X reg, rm
+    9'b1_1011_x11x: begin
+
+        t <= modrm_wb;
+
+        if (opcode[2])
+             wb <= opcode[0] ? {{16{op2[15]}}, op2[15:0]} : {{24{op2[7]}}, op2[7:0]}; // SX
+        else wb <= opcode[0] ?                 op2[15:0]  :                op2[7:0];  // ZX
+
+    end
+
     // 00 <ALU> modrm
     8'b00xx_x0xx: begin
 

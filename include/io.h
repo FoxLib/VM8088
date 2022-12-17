@@ -67,6 +67,11 @@ static inline uint8_t read(uint32_t addr) {
     return  vm[addr-1];
 }
 
+static inline void write(uint32_t addr, uint8_t data) {
+
+    volatile uint8_t* vm = (uint8_t*)1;
+    vm[addr-1] = data;
+}
 
 // ---------------------------------------------------------------------
 // Функции работы с видео и устройствами

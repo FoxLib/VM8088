@@ -40,6 +40,7 @@ if (reset_n == 1'b0) begin
     ds          <= 16'h000;
     es          <= 16'h000;
     ss          <= 16'h000;
+    esp         <= 20'h00800;
     eip         <= 20'hF8000;
     eflags      <= 2'h2;
     adsize      <= defsize;
@@ -417,7 +418,9 @@ else case (t)
                     8'b1111_x11x: begin t <= fetch_modrm; t_next <= exec; dir <= 1'b0; end
 
                     // CMOV<cc> r,rm
-                    9'b1_0100_xxxx: begin t <= fetch_modrm; dir <= 1'b1; size <= 1'b1; end
+                    // MOV[Z|S]X r16/32, rm8/16
+                    9'b1_0100_xxxx,
+                    9'b1_1011_x11x: begin t <= fetch_modrm; dir <= 1'b1; size <= 1'b1; end
 
                     // SET<cc> rm8
                     9'b1_1001_xxxx: begin t <= fetch_modrm; dir <= 1'b0; size <= 1'b0; ignoreo <= 1'b1; end
