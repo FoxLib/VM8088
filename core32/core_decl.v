@@ -155,7 +155,7 @@ wire [15:0] ipnext5     = eip[15:0] + 3'h5;
 wire [31:0] eip_next    = defsize ? eip + 1'b1 : {eip[31:16], ipnext1};
 wire [31:0] eip_next2   = defsize ? eip + 2'h2 : {eip[31:16], ipnext2};
 wire [31:0] eip_next3   = defsize ? eip + 2'h3 : {eip[31:16], ipnext3};
-wire [31:0] eip_next5   = defsize ? eip + 2'h3 : {eip[31:16], ipnext5};
+wire [31:0] eip_next5   = defsize ? eip + 3'h5 : {eip[31:16], ipnext5};
 wire [31:0] esp_dec     = defsize ? esp - 4'h4 : {esp[31:16], sp_dec};
 wire [31:0] esp_inc     = defsize ? esp + 4'h4 : {esp[31:16], sp_inc};
 

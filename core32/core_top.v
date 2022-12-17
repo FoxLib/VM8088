@@ -156,6 +156,8 @@ else case (t)
                     9'b0_0111_xxxx,
                     9'b1_1000_xxxx: begin
 
+                        size <= 1'b1;
+
                         // Если условие не сработало, переход к +2
                         if (branches[ in[3:1] ] == in[0]) begin
 

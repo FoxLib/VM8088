@@ -23,6 +23,9 @@
 #define int64_t     long long
 #define uint64_t    unsigned long long
 
+// Переключение режимов работы VGA
+#define screen13 IoWrite8(0x3D8, 3)
+#define screen3  IoWrite8(0x3D8, 0)
 
 // ---------------------------------------------------------------------
 // I/O Macros

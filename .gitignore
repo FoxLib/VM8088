@@ -31,6 +31,7 @@ obj_dir
 tb.log
 sd.img
 out
+main.bin
 *.com
 *.mp4
 *.o

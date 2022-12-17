@@ -39,11 +39,37 @@ void line(int x1, int y1, int x2, int y2, int color) {
     }
 }
 
-int main() {
+void circle(int xc, int yc, int radius, int color) {
 
-    cli;
+    int x = 0,
+        y = radius,
+        d = 3 - 2*y;
 
-    IoWrite8(0x3D8, 3);
+    while (x <= y) {
+
+        // Верхний и нижний сектор
+        pset(xc - x, yc + y, color);
+        pset(xc + x, yc + y, color);
+        pset(xc - x, yc - y, color);
+        pset(xc + x, yc - y, color);
+
+        // Левый и правый сектор
+        pset(xc - y, yc + x, color);
+        pset(xc + y, yc + x, color);
+        pset(xc - y, yc - x, color);
+        pset(xc + y, yc - x, color);
+
+        d += (4*x + 6);
+        if (d >= 0) {
+            d += 4*(1 - y);
+            y--;
+        }
+
+        x++;
+    }
+}
+
+void test1() {
 
     int n = 0;
     for (;;) {
@@ -52,14 +78,29 @@ int main() {
         for (int x = 0; x < 319; x++) line(x, 0, 319, 199, x + n);
         n++;
     }
+}
 
+void test2() {
 
-    /*
-    for (int y = 0; y < 200; y++)
-    for (int x = 0; x < 256; x++) {
-        pset(x, y, x + y);
+    int n = 3;
+    for (;;) {
+
+        for (int i = 1; i < 100; i++)
+            circle(160, 100, 1 + i, i + n);
+
+        n++;
     }
-    */
+}
+
+
+int main() {
+
+    cli;
+
+    screen13;
+    test2();
+
+
 
     for(;;);
 }

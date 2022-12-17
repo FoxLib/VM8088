@@ -1,5 +1,37 @@
 exec: casex (opcode)
 
+    // E9      JMP near
+    // 180-18C J<ccc> near
+    9'b0_1110_1001,
+    9'b1_1000_xxxx: begin
+
+        t <= fetch;
+
+        if (opsize) eip       <= eip       + wb;
+        else        eip[15:0] <= eip[15:0] + wb[15:0];
+
+    end
+
+    // CMOV<cc> r, rm
+    9'b1_0100_xxxx: begin
+
+        if (branches[ opcode[3:1] ] != opcode[0]) begin
+
+            t  <= modrm_wb;
+            wb <= op2;
+
+        end else begin src <= 0; t <= fetch; end
+
+    end
+
+    // SET<cc> rm8
+    9'b1_1001_xxxx: begin
+
+        t  <= modrm_wb;
+        wb <= branches[ opcode[3:1] ] != opcode[0] ? 1'b1 : 1'b0;
+
+    end
+
     // 00 <ALU> modrm
     8'b00xx_x0xx: begin
 
@@ -782,17 +814,6 @@ exec: casex (opcode)
 
     endcase
 
-    // E9 JMP near
-    9'b0_1110_1001,
-    9'b1_1000_xxxx: begin
-
-        t <= fetch;
-
-        if (opsize) eip       <= eip       + wb;
-        else        eip[15:0] <= eip[15:0] + wb[15:0];
-
-    end
-
     // Групповые инструкции F6/F7
     8'b1111_011x: casex (modrm[5:3])
 
@@ -1042,26 +1063,6 @@ exec: casex (opcode)
         3'b111: t <= exception;
 
     endcase
-
-    // CMOV<cc> r, rm
-    9'b1_0100_xxxx: begin
-
-        if (branches[ opcode[3:1] ] != opcode[0]) begin
-
-            t  <= modrm_wb;
-            wb <= op2;
-
-        end else begin src <= 0; t <= fetch; end
-
-    end
-
-    // SET<cc> rm8
-    9'b1_1001_xxxx: begin
-
-        t  <= modrm_wb;
-        wb <= branches[ opcode[3:1] ] != opcode[0] ? 1'b1 : 1'b0;
-
-    end
 
     // UNEXPECTED INSTRUCTION
     default: begin end
