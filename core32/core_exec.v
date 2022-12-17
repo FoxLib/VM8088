@@ -1055,6 +1055,14 @@ exec: casex (opcode)
 
     end
 
+    // SET<cc> rm8
+    9'b1_1001_xxxx: begin
+
+        t  <= modrm_wb;
+        wb <= branches[ opcode[3:1] ] != opcode[0] ? 1'b1 : 1'b0;
+
+    end
+
     // UNEXPECTED INSTRUCTION
     default: begin end
 

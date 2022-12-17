@@ -15,7 +15,8 @@ if (file_exists("core_top.v")) {
             $file = join("\n", $file);
             $core = str_replace($c[0], $file, $core);
         }
-
     }
+
+    $core = preg_replace('~\s+$~m', '', $core);
     file_put_contents("../core.v", $core);
 }

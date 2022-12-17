@@ -28,7 +28,8 @@ module core
     output      [ 3:0]  instr
 );
 
-assign instr = t;
+// Отладочные
+assign instr = t; wire m0 = (t == 1'b0 && clock == 1'b0);
 
 always @(posedge clock)
 if (locked) begin
@@ -88,6 +89,7 @@ else case (t)
             // LOCK, REP
             8'hF0: begin psize <= psize + 1'b1; end // LOCK:
             8'hF2, 8'hF3: begin psize <= psize + 1'b1; __rep <= in[1:0]; end
+
             // Исполнение опкода
             default: begin
 
@@ -413,7 +415,10 @@ else case (t)
                     8'b1111_x11x: begin t <= fetch_modrm; t_next <= exec; dir <= 1'b0; end
 
                     // CMOV<cc> r,rm
-                    9'b1_0100_xxxx: begin t <= fetch_modrm; dir <= 1'b1; end
+                    9'b1_0100_xxxx: begin t <= fetch_modrm; dir <= 1'b1; size <= 1'b1; end
+
+                    // SET<cc> rm8
+                    9'b1_1001_xxxx: begin t <= fetch_modrm; dir <= 1'b0; size <= 1'b0; ignoreo <= 1'b1; end
 
                     // Все оставшиеся
                     default: t <= exec;
