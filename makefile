@@ -49,4 +49,4 @@ core.v: $(DIR)/core_top.v $(DIR)/core_decl.v $(DIR)/core_exec.v $(DIR)/core_proc
 video:
 	ffmpeg -framerate 70 -r 60 -i out/record.ppm -vf "scale=w=1280:h=800,pad=width=1920:height=1080:x=320:y=140:color=black" -sws_flags neighbor -sws_dither none -f mp4 -q:v 0 -vcodec mpeg4 -y record.mp4
 clean:
-	rm -rf *.o tb tb.log obj_dir
+	rm -rf *.o tb tb.log obj_dir bios.bin bios.hex tb.vcd

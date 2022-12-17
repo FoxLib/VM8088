@@ -13,7 +13,7 @@ all: $(DEPS)
 	php $(ROOT)/utils/makebin.php bios.bin $(ROOT)/bios.hex
 	php $(ROOT)/utils/bin2mif.php bios.bin 32768 > $(ROOT)/de0/bios.mif
 	mv bios.bin $(ROOT)/bios.bin
-	cd $(ROOT) && make
+	cd $(ROOT) && ./tb
 nasm.o: main.asm
 	nasm -felf32 -o nasm.o main.asm
 %.o: %.c

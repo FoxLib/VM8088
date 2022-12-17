@@ -35,6 +35,7 @@ out
 *.mp4
 *.o
 *.lst
+tb.gtkw
 /core.v
 /bios.bin
 /bios.hex
